@@ -76,7 +76,15 @@ const getErrorMessage = (errorCode) => {
     case 'auth/user-not-found':
       return 'No account found with this email. Please register first.';
     case 'auth/wrong-password':
-      return 'Incorrect password. Please try again.';
+    case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials':
+      return 'Incorrect email or password. Please try again.';
+    case 'auth/operation-not-allowed':
+      return 'Email/password sign-in is not enabled for this project. Contact the HPAIR tech team.';
+    case 'auth/network-request-failed':
+      return 'Network error. Check your connection and try again.';
+    case 'auth/user-disabled':
+      return 'This account has been disabled.';
     case 'auth/too-many-requests':
       return 'Too many failed attempts. Please try again later.';
     default:
@@ -84,10 +92,12 @@ const getErrorMessage = (errorCode) => {
   }
 };
 
-export default {
+const authService = {
   registerUser,
   signInUser,
   signOutUser,
   onAuthStateChange,
   getCurrentUser
 };
+
+export default authService;

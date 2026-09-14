@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /formSubmissions/{id} {
+      // Any signed-in delegate can read (the /admin table needs this in the demo).
+      allow read: if request.auth != null;
+      // Delegates may only create submissions stamped with their own uid.
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+      // Submissions are immutable once sent.
+      allow update, delete: if false;
+    }
+  }
+}

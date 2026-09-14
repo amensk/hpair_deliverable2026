@@ -1,129 +1,175 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getFormSubmissions, getSubmissionCount } from '../services/firebaseService';
+import { FiRefreshCw, FiDownload, FiArrowLeft, FiExternalLink } from 'react-icons/fi';
+import { getFormSubmissions } from '../services/firebaseService';
 import { useAuth } from '../contexts/AuthContext';
-import { signOutUser } from '../services/authService';
+import Alert from './ui/Alert';
+import { formatDate, fullName, formatPhone } from '../utils/format';
+import { countryName } from '../data/countries';
+import { TRACKS } from '../data/languages';
+import { downloadBlob } from '../utils/summary';
+import { downloadDataUrl } from '../utils/file';
+
+const csvEscape = (v) => {
+  const s = v == null ? '' : String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
 
 const AdminPanel = () => {
   const [submissions, setSubmissions] = useState([]);
-  const [submissionCount, setSubmissionCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { user, userId: currentUserId } = useAuth();
+  const [filter, setFilter] = useState('');
+  const [track, setTrack] = useState('');
+  const { user } = useAuth();
 
-  const handleLogout = async () => {
-    await signOutUser();
-  };
-
-  useEffect(() => {
-    loadSubmissions();
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    const res = await getFormSubmissions();
+    if (res.success) setSubmissions(res.data);
+    else setError(res.message);
+    setLoading(false);
   }, []);
 
-  const loadSubmissions = async () => {
-    try {
-      setLoading(true);
-      const [submissionsResult, countResult] = await Promise.all([
-        getFormSubmissions(),
-        getSubmissionCount()
-      ]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
-      if (submissionsResult.success) {
-        // Show all submissions (admin view)
-        setSubmissions(submissionsResult.data);
-      } else {
-        setError(submissionsResult.message);
-      }
+  const rows = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    return submissions.filter((s) => {
+      if (track && s.track !== track) return false;
+      if (!q) return true;
+      return [fullName(s), s.email, s.institution, countryName(s.nationality), s.city].filter(Boolean).join(' ').toLowerCase().includes(q);
+    });
+  }, [submissions, filter, track]);
 
-      if (countResult.success) {
-        setSubmissionCount(countResult.count);
-      }
-    } catch (err) {
-      setError('Failed to load submissions');
-      console.error('Error loading submissions:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A';
-    return new Date(timestamp.seconds * 1000).toLocaleString();
-  };
-
-  if (loading) {
-    return (
-      <div className="container">
-        <div className="form-container">
-          <h2>Loading submissions...</h2>
-        </div>
-      </div>
+  const exportCsv = () => {
+    const headers = ['Reference', 'Submitted', 'Name', 'Email', 'Phone', 'Nationality', 'Country', 'City', 'Institution', 'Track', 'Preferred language', 'LinkedIn', 'CV'];
+    const lines = [headers.join(',')];
+    rows.forEach((s) =>
+      lines.push(
+        [
+          s.id,
+          formatDate(s.submittedAt),
+          fullName(s),
+          s.email,
+          formatPhone(s.phoneDial, s.phoneNumber),
+          countryName(s.nationality),
+          countryName(s.country),
+          s.city,
+          s.institution,
+          TRACKS.find((t) => t.value === s.track)?.label || s.track,
+          s.preferredLanguage,
+          s.linkedinUrl,
+          s.cvUrl || (s.cvData ? `${s.cvName} (embedded)` : s.cvName),
+        ]
+          .map(csvEscape)
+          .join(',')
+      )
     );
-  }
+    downloadBlob(lines.join('\n'), `hpair-submissions-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv');
+  };
 
   return (
     <div className="container">
-      <div className="form-container">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1>Admin Panel - All Submissions</h1>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Link 
-              to="/"
-              className="btn btn-secondary"
-              style={{ fontSize: '14px', padding: '8px 16px', textDecoration: 'none' }}
-            >
-              Back to Form
-            </Link>
-            <button 
-              onClick={handleLogout}
-              className="btn btn-secondary"
-              style={{ fontSize: '14px', padding: '8px 16px' }}
-            >
-              Logout
-            </button>
-          </div>
+      <div className="card card--pad">
+        <div className="toolbar" style={{ justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--hp-ink-muted)' }}>Signed in as {user.email}</span>
+          <Link to="/" className="btn btn--ghost btn--sm" style={{ width: 'auto' }}>
+            <FiArrowLeft size={16} aria-hidden="true" /> <span>Back to my form</span>
+          </Link>
         </div>
-        
-        <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-          <p><strong>Logged in as:</strong> {user.email}</p>
-          <p><strong>Total submissions:</strong> {submissionCount}</p>
-          <p><strong>Showing all submissions from all users</strong></p>
-        </div>
-
-        
-        {error && (
-          <div className="submit-message error">
-            {error}
-          </div>
-        )}
-
-        <button 
-          onClick={loadSubmissions} 
-          className="btn btn-primary"
-          style={{ marginBottom: '20px' }}
-        >
-          Refresh
-        </button>
-
-        {submissions.length === 0 ? (
-          <p>No submissions yet.</p>
-        ) : (
-          <div className="submissions-list">
-            {submissions.map((submission) => (
-              <div key={submission.id} className="submission-item">
-                <div className="submission-header">
-                  <h3>Submission #{submission.id.slice(-8)}</h3>
-                  <span className="submission-date">
-                    {formatDate(submission.submittedAt)}
-                  </span>
-                </div>
-                <div className="submission-details">
-                  <p><strong>User ID:</strong> {submission.userId}</p>
-                  <p><strong>Name:</strong> {submission.firstName} {submission.lastName}</p>
-                  <p><strong>Date of Birth:</strong> {submission.dateOfBirth}</p>
-                  <p><strong>Gender:</strong> {submission.gender}</p>
-                </div>
-              </div>
+        <div className="toolbar">
+          <input
+            className="input"
+            type="search"
+            placeholder="Search name, email, institution, country…"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            aria-label="Search submissions"
+          />
+          <select className="input input--select" style={{ maxWidth: 260, minHeight: 42 }} value={track} onChange={(e) => setTrack(e.target.value)} aria-label="Filter by programme">
+            <option value="">All programmes</option>
+            {TRACKS.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
             ))}
+          </select>
+          <span style={{ marginLeft: 'auto', fontSize: '0.85rem', color: 'var(--hp-ink-muted)' }}>
+            {loading ? 'Loading…' : `${rows.length} of ${submissions.length}`}
+          </span>
+          <button type="button" className="btn btn--ghost btn--sm" style={{ width: 'auto' }} onClick={load} disabled={loading}>
+            <FiRefreshCw size={16} aria-hidden="true" /> <span>Refresh</span>
+          </button>
+          <button type="button" className="btn btn--primary btn--sm" style={{ width: 'auto' }} onClick={exportCsv} disabled={!rows.length}>
+            <FiDownload size={16} aria-hidden="true" /> <span>Export CSV</span>
+          </button>
+        </div>
+
+        {error && <Alert type="error">{error}</Alert>}
+
+        {loading ? (
+          <div style={{ display: 'grid', gap: 8 }} aria-busy="true">
+            {[0, 1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 44 }} />)}
+          </div>
+        ) : rows.length === 0 ? (
+          <Alert type="info">No submissions match.</Alert>
+        ) : (
+          <div className="table-wrap">
+            <table className="data">
+              <thead>
+                <tr>
+                  <th>Submitted</th>
+                  <th>Delegate</th>
+                  <th>Contact</th>
+                  <th>Nationality / residence</th>
+                  <th>Institution</th>
+                  <th>Programme</th>
+                  <th>Links</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((s) => (
+                  <tr key={s.id}>
+                    <td>
+                      {formatDate(s.submittedAt)}
+                      <div style={{ fontSize: '0.72rem', color: 'var(--hp-ink-muted)' }}>{s.id.slice(-8).toUpperCase()}</div>
+                    </td>
+                    <td>
+                      <strong style={{ fontWeight: 500 }}>{fullName(s) || '—'}</strong>
+                      {s.preferredName && <div style={{ fontSize: '0.78rem', color: 'var(--hp-ink-muted)' }}>“{s.preferredName}”</div>}
+                    </td>
+                    <td>
+                      <div>{s.email}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--hp-ink-muted)' }}>{formatPhone(s.phoneDial, s.phoneNumber)}</div>
+                    </td>
+                    <td>
+                      {countryName(s.nationality)}
+                      {s.country && s.country !== s.nationality && (
+                        <div style={{ fontSize: '0.78rem', color: 'var(--hp-ink-muted)' }}>lives in {countryName(s.country)}</div>
+                      )}
+                    </td>
+                    <td>{s.institution}</td>
+                    <td><span className="tag">{TRACKS.find((t) => t.value === s.track)?.label?.split(' (')[0] || s.track || '—'}</span></td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {s.linkedinUrl && (
+                        <a href={s.linkedinUrl.startsWith('http') ? s.linkedinUrl : `https://${s.linkedinUrl}`} target="_blank" rel="noreferrer" style={{ marginRight: 10 }}>
+                          LinkedIn
+                        </a>
+                      )}
+                      {s.cvUrl ? (
+                        <a href={s.cvUrl} target="_blank" rel="noreferrer">CV <FiExternalLink size={12} aria-hidden="true" /></a>
+                      ) : s.cvData ? (
+                        <button type="button" className="summary__edit" onClick={() => downloadDataUrl(s.cvData, s.cvName)}>CV (download)</button>
+                      ) : s.cvName ? (
+                        <span title="File name recorded; upload was not stored">CV: {s.cvName}</span>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

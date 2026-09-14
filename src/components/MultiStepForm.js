@@ -1,196 +1,428 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Formik, Form, useFormikContext } from 'formik';
+import { FiArrowLeft, FiArrowRight, FiCheck, FiCheckCircle, FiClock, FiFileText, FiHelpCircle, FiSave, FiSend, FiTrash2 } from 'react-icons/fi';
 import PersonalInfoStep from './steps/PersonalInfoStep';
-import { submitForm, getFormSubmissions, getSubmissionCount } from '../services/firebaseService';
+import ContactStep from './steps/ContactStep';
+import ProfessionalStep from './steps/ProfessionalStep';
+import ReviewStep from './steps/ReviewStep';
+import SuccessScreen from './SuccessScreen';
+import SubmissionsList from './SubmissionsList';
+import Button from './ui/Button';
+import Alert from './ui/Alert';
+import { useToast } from './ui/Toast';
 import { useAuth } from '../contexts/AuthContext';
-import { signOutUser } from '../services/authService';
+import { submitForm, getUserSubmissions } from '../services/firebaseService';
+import { uploadCV } from '../services/storageService';
+import { fileToDataUrl, INLINE_CV_MAX_BYTES } from '../utils/file';
+import { readLocalSubmissions, saveLocalSubmission, makeLocalId } from '../services/localStore';
+import { STEP_SCHEMAS, STEP_FIELDS, INITIAL_VALUES } from '../validation/schemas';
+import { readDraft, useDraftSaver } from '../hooks/useDraft';
+import { buildMailto } from '../utils/summary';
+
+const STEPS = [
+  { title: 'Personal', component: PersonalInfoStep },
+  { title: 'Contact', component: ContactStep },
+  { title: 'Background', component: ProfessionalStep },
+  { title: 'Review', component: ReviewStep },
+];
+
+// Mirrors live Formik values up to the parent so the draft saver can persist them.
+const DraftSync = ({ onChange }) => {
+  const { values } = useFormikContext();
+  useEffect(() => {
+    onChange(values);
+  }, [values, onChange]);
+  return null;
+};
+
+const timeAgo = (ts) => {
+  if (!ts) return '';
+  const s = Math.round((Date.now() - ts) / 1000);
+  if (s < 5) return 'just now';
+  if (s < 60) return `${s}s ago`;
+  const m = Math.round(s / 60);
+  return m < 60 ? `${m} min ago` : 'over an hour ago';
+};
+
+const Stepper = ({ step, maxReached, onSelect }) => (
+  <ol className="stepper" aria-label="Form progress">
+    {STEPS.map((s, i) => {
+      const state = i < step ? 'complete' : i === step ? 'current' : 'upcoming';
+      const clickable = i <= maxReached && i !== step;
+      return (
+        <li key={s.title} style={{ display: 'contents' }}>
+          <button
+            type="button"
+            className="stepper__item"
+            data-state={state}
+            data-clickable={clickable}
+            aria-current={i === step ? 'step' : undefined}
+            disabled={!clickable}
+            onClick={() => clickable && onSelect(i)}
+          >
+            <span className="stepper__bar" aria-hidden="true" />
+            <span className="stepper__label">
+              <span className="stepper__num">{state === 'complete' ? <FiCheck size={12} aria-hidden="true" /> : i + 1}</span>
+              <span className="stepper__title">{s.title}</span>
+            </span>
+          </button>
+        </li>
+      );
+    })}
+  </ol>
+);
 
 const MultiStepForm = () => {
-  const [formData, setFormData] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState('');
-  const [submissions, setSubmissions] = useState([]);
-  const [submissionCount, setSubmissionCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const { user, userId } = useAuth();
+  const toast = useToast();
 
-  const handleLogout = async () => {
-    await signOutUser();
-  };
+  const draft = useMemo(() => readDraft(userId), [userId]);
+  const [step, setStep] = useState(() => Math.min(draft?.step ?? 0, STEPS.length - 1));
+  const [maxReached, setMaxReached] = useState(step);
+  const [restoredCvMeta] = useState(draft?.values?.cvMeta || null);
+  const [result, setResult] = useState(null); // { values, id, submittedAt, cvStatus }
+  const [progress, setProgress] = useState(null); // { label, pct }
+  const [submitError, setSubmitError] = useState('');
 
-  // Load user's submissions
+  const [submissions, setSubmissions] = useState([]);
+  const [localSubs, setLocalSubs] = useState(() => readLocalSubmissions(userId));
+  const [subsLoading, setSubsLoading] = useState(true);
+  const [subsError, setSubsError] = useState('');
+
+  const headingRef = useRef(null);
+  const formikRef = useRef(null);
+
+  // Draft autosave needs live Formik values; <DraftSync> mirrors them here.
+  const [liveValues, setLiveValues] = useState(null);
+  const draftApi = useDraftSaver(userId, liveValues, step, !result && liveValues != null);
+
+  const initialValues = useMemo(() => {
+    const restored = draft?.values ? { ...draft.values } : {};
+    delete restored.cvMeta;
+    return { ...INITIAL_VALUES, email: user?.email || '', ...restored, cv: null };
+  }, [draft, user]);
+
   useEffect(() => {
-    loadSubmissions();
+    if (draft?.values) toast.info('We restored your saved draft.', 3500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadSubmissions = useCallback(async () => {
+    setSubsLoading(true);
+    setSubsError('');
+    const res = await getUserSubmissions(userId);
+    if (res.success) setSubmissions(res.data);
+    else setSubsError(res.message);
+    setSubsLoading(false);
   }, [userId]);
 
-  const loadSubmissions = async () => {
-    try {
-      setLoading(true);
-      const [submissionsResult, countResult] = await Promise.all([
-        getFormSubmissions(),
-        getSubmissionCount()
-      ]);
+  useEffect(() => {
+    loadSubmissions();
+  }, [loadSubmissions]);
 
-      if (submissionsResult.success) {
-        // Show only current user's submissions
-        const userSubmissions = submissionsResult.data.filter(
-          submission => submission.userId === userId
-        );
-        setSubmissions(userSubmissions);
-      } else {
-        setError(submissionsResult.message);
+  const goTo = useCallback((i) => {
+    setStep(i);
+    setMaxReached((m) => Math.max(m, i));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      const h = headingRef.current?.querySelector('.step__header h2');
+      if (h) {
+        h.setAttribute('tabindex', '-1');
+        h.focus({ preventScroll: true });
       }
+    }, 250);
+  }, []);
 
-      if (countResult.success) {
-        setSubmissionCount(countResult.count);
+  const focusFirstInvalid = (errors) => {
+    const names = STEP_FIELDS[step].filter((n) => errors[n]);
+    for (const n of names) {
+      const el = document.querySelector(`[name="${n}"]`);
+      if (el) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+        return;
       }
-    } catch (err) {
-      setError('Failed to load submissions');
-      console.error('Error loading submissions:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
-  // TODO: Implement form validation using Formik and Yup
-  // TODO: Implement form data handling
+  const handleNext = async (formik) => {
+    const errors = await formik.validateForm();
+    const fields = STEP_FIELDS[step];
+    const stepErrors = fields.filter((f) => errors[f]);
+    if (stepErrors.length) {
+      fields.forEach((f) => formik.setFieldTouched(f, true, false));
+      toast.error(`Please fix ${stepErrors.length} field${stepErrors.length > 1 ? 's' : ''} before continuing.`, 4000);
+      focusFirstInvalid(errors);
+      return;
+    }
+    goTo(step + 1);
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitMessage('');
-    
-    try {
-      // TODO: Add validation before submitting
-      const submissionData = {
-        ...formData,
-        userId: userId
-      };
-      
-      const result = await submitForm(submissionData);
-      
-      if (result.success) {
-        setSubmitMessage('Form submitted successfully!');
-        // Reset form
-        setFormData({});
-        // Reload submissions to show the new one
-        loadSubmissions();
+  const handleSubmit = async (values, helpers) => {
+    setSubmitError('');
+    let cvStatus = null;
+    let cvFields = {
+      cvName: values.cv?.name || null,
+      cvSize: values.cv?.size || null,
+      cvType: values.cv?.type || null,
+      cvUrl: null,
+      cvPath: null,
+      cvData: null,
+    };
+
+    // 1. CV: try Firebase Storage first; if the bucket is unavailable, embed
+    //    small files directly in the Firestore document instead.
+    if (values.cv) {
+      setProgress({ label: 'Uploading CV…', pct: 0 });
+      const up = await uploadCV(values.cv, userId, (pct) => setProgress({ label: 'Uploading CV…', pct }));
+      if (up.success) {
+        cvStatus = { success: true, mode: 'storage' };
+        cvFields = { ...cvFields, cvUrl: up.url, cvPath: up.path };
+      } else if (values.cv.size <= INLINE_CV_MAX_BYTES) {
+        try {
+          setProgress({ label: 'Attaching CV…', pct: null });
+          cvFields.cvData = await fileToDataUrl(values.cv);
+          cvStatus = { success: true, mode: 'inline' };
+        } catch {
+          cvStatus = { success: false, message: up.message };
+        }
       } else {
-        setSubmitMessage(result.message);
+        cvStatus = { success: false, message: `${up.message} Files over 600 KB cannot be embedded, so only the file name was recorded.` };
       }
-    } catch (error) {
-      setSubmitMessage('An error occurred. Please try again.');
-      console.error('Submit error:', error);
-    } finally {
-      setIsSubmitting(false);
+    }
+
+    // 2. Submission document
+    setProgress({ label: 'Saving your form…', pct: null });
+    const { cv, consent, privacy, emailCopy, ...rest } = values;
+    const payload = {
+      ...rest,
+      ...cvFields,
+      consentGiven: consent,
+      privacyAccepted: privacy,
+      userId,
+      userEmail: user?.email || null,
+      formVersion: 2,
+    };
+
+    const res = await submitForm(payload);
+    setProgress(null);
+    helpers.setSubmitting(false);
+
+    let storageMode = 'firestore';
+    let id = res.id;
+
+    if (!res.success) {
+      if (res.code === 'permission-denied' || res.code === 'unavailable') {
+        // 3. The database refused. Keep the completed submission on this device
+        //    so nothing is lost, and say so plainly on the confirmation screen.
+        id = makeLocalId();
+        const saved = saveLocalSubmission(userId, { ...payload, id, submittedAt: new Date().toISOString(), timestamp: Date.now(), storedLocally: true });
+        if (!saved) {
+          setSubmitError(res.message);
+          toast.error('Submission failed. Your answers are still here, nothing was lost.');
+          return;
+        }
+        storageMode = 'local';
+        setLocalSubs(readLocalSubmissions(userId));
+      } else {
+        setSubmitError(res.message);
+        toast.error('Submission failed. Your answers are still here, nothing was lost.');
+        return;
+      }
+    }
+
+    draftApi.reset();
+    setResult({ values, id, submittedAt: new Date(), cvStatus, storageMode, dbMessage: res.success ? null : res.message });
+    if (storageMode === 'firestore') toast.success('Form submitted successfully.');
+    else toast.info('Saved on this device. The submissions database declined the write.', 6000);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    loadSubmissions();
+
+    if (emailCopy && values.email) {
+      setTimeout(() => {
+        try {
+          window.location.assign(buildMailto(values.email, values, { id, submittedAt: new Date() }));
+        } catch {
+          /* mail client unavailable */
+        }
+      }, 800);
     }
   };
+
+  const startAnother = () => {
+    setResult(null);
+    setStep(0);
+    setMaxReached(0);
+    formikRef.current?.resetForm({ values: { ...INITIAL_VALUES, email: user?.email || '' } });
+    goTo(0);
+  };
+
+  const clearDraftAndReset = () => {
+    draftApi.reset();
+    formikRef.current?.resetForm({ values: { ...INITIAL_VALUES, email: user?.email || '' } });
+    setStep(0);
+    setMaxReached(0);
+    toast.info('Draft cleared.');
+  };
+
+  if (result) {
+    return (
+      <div className="container">
+        <SuccessScreen
+          values={result.values}
+          submissionId={result.id}
+          submittedAt={result.submittedAt}
+          cvStatus={result.cvStatus}
+          storageMode={result.storageMode}
+          dbMessage={result.dbMessage}
+          onStartAnother={startAnother}
+        />
+        <SubmissionsList submissions={[...localSubs, ...submissions]} loading={subsLoading} error={subsError} onRefresh={loadSubmissions} />
+      </div>
+    );
+  }
+
+  const StepComponent = STEPS[step].component;
+  const isLast = step === STEPS.length - 1;
 
   return (
     <div className="container">
-      <div className="form-container">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1>Personal Information Form</h1>
-          <button 
-            onClick={handleLogout}
-            className="btn btn-secondary"
-            style={{ fontSize: '14px', padding: '8px 16px' }}
-          >
-            Logout
-          </button>
-        </div>
-        <p>Please provide your basic personal details.</p>
-        
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '10px', 
-          backgroundColor: '#e3f2fd', 
-          borderRadius: '4px',
-          fontSize: '14px'
-        }}>
-          <strong>Logged in as:</strong> {user.email}
-        </div>
-        
-        <form onSubmit={handleSubmit}>
-          <PersonalInfoStep 
-            formData={formData} 
-            setFormData={setFormData} 
-          />
-          
-          {submitMessage && (
-            <div className={`submit-message ${submitMessage.includes('successfully') ? 'success' : 'error'}`}>
-              {submitMessage}
-            </div>
-          )}
-          
-          <div className="form-actions">
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
-            </button>
-          </div>
-        </form>
+      <Formik
+        innerRef={formikRef}
+        initialValues={initialValues}
+        validationSchema={STEP_SCHEMAS[step]}
+        validateOnChange
+        validateOnBlur
+        validateOnMount
+        onSubmit={handleSubmit}
+      >
+        {(formik) => {
+          const stepErrors = STEP_SCHEMAS.slice(0, 3).map((schema) => !schema.isValidSync(formik.values));
+          const allValid = !stepErrors.some(Boolean) && formik.isValid;
 
-        {/* Admin Panel - User's Submissions */}
-        <div style={{ marginTop: '40px', paddingTop: '40px', borderTop: '2px solid #e0e0e0' }}>
-          <h2>Your Form Submissions</h2>
-          <p>View all your submitted forms below.</p>
-          
-          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-            <p><strong>Logged in as:</strong> {user.email}</p>
-            <p><strong>Total submissions:</strong> {submissionCount}</p>
-            <p><strong>Your submissions:</strong> {submissions.length}</p>
-          </div>
+          const onKeyDown = (e) => {
+            if (e.key !== 'Enter') return;
+            const t = e.target;
+            if (t.tagName === 'TEXTAREA' || t.tagName === 'BUTTON' || t.type === 'checkbox' || t.type === 'radio' || t.type === 'file') return;
+            if (!isLast) {
+              e.preventDefault();
+              handleNext(formik);
+            }
+          };
 
-          {error && (
-            <div className="submit-message error">
-              {error}
-            </div>
-          )}
+          return (
+            <div className="form-shell">
+              <Form noValidate onKeyDown={onKeyDown} aria-busy={formik.isSubmitting || undefined}>
+                <DraftSync onChange={setLiveValues} />
+                <div className="card card--pad" ref={headingRef}>
+                  <Stepper step={step} maxReached={maxReached} onSelect={goTo} />
 
-          <button 
-            onClick={loadSubmissions} 
-            className="btn btn-primary"
-            style={{ marginBottom: '20px' }}
-          >
-            Refresh
-          </button>
+                  {StepComponent === ReviewStep ? (
+                    <ReviewStep goToStep={goTo} stepErrors={stepErrors} />
+                  ) : StepComponent === ProfessionalStep ? (
+                    <ProfessionalStep restoredCvMeta={restoredCvMeta} />
+                  ) : (
+                    <StepComponent />
+                  )}
 
-          {loading ? (
-            <p>Loading submissions...</p>
-          ) : submissions.length === 0 ? (
-            <p>No submissions yet. Fill out the form above to get started!</p>
-          ) : (
-            <div className="submissions-list">
-              {submissions.map((submission) => (
-                <div key={submission.id} className="submission-item">
-                  <div className="submission-header">
-                    <h3>Submission #{submission.id.slice(-8)}</h3>
-                    <span className="submission-date">
-                      {formatDate(submission.submittedAt)}
-                    </span>
+                  {submitError && (
+                    <Alert type="error">
+                      <strong>Submission failed.</strong> {submitError}
+                    </Alert>
+                  )}
+
+                  {progress && (
+                    <div className="alert alert--info" role="status" aria-live="polite">
+                      <span className="spinner" aria-hidden="true" />
+                      <div style={{ flex: 1 }}>
+                        {progress.label} {progress.pct != null && `${progress.pct}%`}
+                        {progress.pct != null && (
+                          <div className="progress" aria-hidden="true"><span style={{ width: `${progress.pct}%` }} /></div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="form-actions">
+                    <div>
+                      {step > 0 && (
+                        <Button type="button" variant="ghost" icon={FiArrowLeft} onClick={() => goTo(step - 1)} disabled={formik.isSubmitting}>
+                          Back
+                        </Button>
+                      )}
+                    </div>
+                    <div className="form-actions__right">
+                      <span className="autosave" aria-live="polite">
+                        {draftApi.savedAt ? (
+                          <>
+                            <FiCheckCircle size={14} aria-hidden="true" /> Draft saved {timeAgo(draftApi.savedAt)}
+                          </>
+                        ) : (
+                          <>
+                            <FiSave size={14} aria-hidden="true" style={{ color: 'inherit' }} /> Autosave on
+                          </>
+                        )}
+                      </span>
+                      {isLast ? (
+                        <Button type="submit" loading={formik.isSubmitting} disabled={!allValid} icon={FiSend}>
+                          Submit form
+                        </Button>
+                      ) : (
+                        <Button type="button" onClick={() => handleNext(formik)} iconRight={FiArrowRight} disabled={formik.isSubmitting}>
+                          Continue
+                        </Button>
+                      )}
+                    </div>
                   </div>
-              <div className="submission-details">
-                <p><strong>Name:</strong> {submission.firstName} {submission.lastName}</p>
-                <p><strong>Date of Birth:</strong> {submission.dateOfBirth}</p>
-                <p><strong>Gender:</strong> {submission.gender}</p>
-              </div>
                 </div>
-              ))}
+              </Form>
+
+              <aside className="side-rail" aria-label="Help and progress">
+                <div className="card side-rail__block">
+                  <h3>Progress</h3>
+                  <ul>
+                    {STEPS.slice(0, 3).map((s, i) => {
+                      const done = !stepErrors[i];
+                      return (
+                        <li key={s.title}>
+                          {done ? <FiCheckCircle size={16} aria-hidden="true" /> : <FiClock size={16} aria-hidden="true" style={{ color: 'var(--hp-ink-muted)' }} />}
+                          <span>
+                            {s.title} {done ? '' : <span style={{ color: 'var(--hp-ink-muted)' }}>· incomplete</span>}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+                <div className="card side-rail__block">
+                  <h3>Before you start</h3>
+                  <ul>
+                    <li><FiFileText size={16} aria-hidden="true" /> <span>Have your CV ready as a PDF or Word file under 5 MB.</span></li>
+                    <li><FiHelpCircle size={16} aria-hidden="true" /> <span>Fields marked <em>Optional</em> can be skipped. Everything else is required.</span></li>
+                    <li><FiSave size={16} aria-hidden="true" /> <span>Press <kbd>Enter</kbd> to move to the next section, <kbd>Tab</kbd> between fields.</span></li>
+                  </ul>
+                </div>
+                <div className="card card--dark side-rail__block">
+                  <h3>Need help?</h3>
+                  <p style={{ color: 'rgba(252,252,252,.75)' }}>
+                    Email <a href="mailto:cqiu@college.harvard.edu" style={{ color: '#fff' }}>cqiu@college.harvard.edu</a> or{' '}
+                    <a href="mailto:ashleyzheng@college.harvard.edu" style={{ color: '#fff' }}>ashleyzheng@college.harvard.edu</a>.
+                  </p>
+                </div>
+                {draftApi.savedAt && (
+                  <button type="button" className="btn btn--danger-ghost btn--sm" onClick={clearDraftAndReset}>
+                    <FiTrash2 size={14} aria-hidden="true" /> <span>Clear draft and start over</span>
+                  </button>
+                )}
+              </aside>
             </div>
-          )}
-        </div>
-      </div>
+          );
+        }}
+      </Formik>
+
+      <SubmissionsList submissions={[...localSubs, ...submissions]} loading={subsLoading} error={subsError} onRefresh={loadSubmissions} />
     </div>
   );
-};
-
-const formatDate = (timestamp) => {
-  if (!timestamp) return 'N/A';
-  return new Date(timestamp.seconds * 1000).toLocaleString();
 };
 
 export default MultiStepForm;
