@@ -2,7 +2,10 @@
 
 A multi-step personal information form for HPAIR delegates, built on the provided React + Firebase starter and styled to match [hpair.org](https://www.hpair.org/).
 
-**Live demo:** _add Vercel URL here_
+**Live demo:** https://hpair-delegate-portal.vercel.app  
+**Repository:** https://github.com/amensk/hpair_deliverable2026
+
+Test account for reviewers: `delegate.test@hpair-demo.com` / `Hpair2026!` (or register your own).
 
 ---
 
