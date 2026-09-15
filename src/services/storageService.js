@@ -1,5 +1,6 @@
 // Firebase Storage upload for CV files, with progress reporting.
 import app from '../firebase/config';
+import { tEn } from '../i18n';
 
 // The Storage SDK is only needed at upload time, so it is loaded on demand
 // to keep it out of the initial bundle.
@@ -23,12 +24,12 @@ const UPLOAD_TIMEOUT_MS = 15000;
  * onProgress receives 0..100.
  */
 export const uploadCV = async (file, userId, onProgress) => {
-  if (!file) return { success: false, code: 'no-file', message: 'No file selected' };
+  if (!file) return { success: false, code: 'no-file', messageKey: 'err.cv.noFile', message: tEn('err.cv.noFile') };
   let sdk;
   try {
     sdk = await loadStorage();
   } catch (error) {
-    return { success: false, code: 'storage/unavailable', message: 'The file storage module could not be loaded.' };
+    return { success: false, code: 'storage/unavailable', messageKey: 'err.storage.module', message: tEn('err.storage.module') };
   }
   const { ref, uploadBytesResumable, getDownloadURL, storage } = sdk;
   return new Promise((resolve) => {
@@ -48,7 +49,7 @@ export const uploadCV = async (file, userId, onProgress) => {
       } catch {
         /* already finished */
       }
-      finish({ success: false, code: 'storage/timeout', message: 'The file storage service did not respond.' });
+      finish({ success: false, code: 'storage/timeout', messageKey: 'err.storage.noResponse', message: tEn('err.storage.noResponse') });
     }, UPLOAD_TIMEOUT_MS + 2000);
 
     task.on(
@@ -60,33 +61,34 @@ export const uploadCV = async (file, userId, onProgress) => {
       },
       (error) => {
         console.error('CV upload failed:', error);
-        finish({ success: false, code: error.code, message: friendlyStorageError(error.code) });
+        finish({ success: false, code: error.code, messageKey: storageKey(error.code), message: friendlyStorageError(error.code) });
       },
       async () => {
         try {
           const url = await getDownloadURL(task.snapshot.ref);
           finish({ success: true, url, path, name: file.name, size: file.size, type: file.type });
         } catch (error) {
-          finish({ success: false, code: error.code, message: friendlyStorageError(error.code) });
+          finish({ success: false, code: error.code, messageKey: storageKey(error.code), message: friendlyStorageError(error.code) });
         }
       }
     );
   });
 };
 
-const friendlyStorageError = (code) => {
+const storageKey = (code) => {
   switch (code) {
     case 'storage/unauthorized':
-      return 'The storage bucket rejected the upload (permission denied).';
+      return 'err.storage.unauthorized';
     case 'storage/canceled':
-      return 'Upload cancelled.';
+      return 'err.storage.cancelled';
     case 'storage/quota-exceeded':
-      return 'Storage quota exceeded.';
+      return 'err.storage.quota';
     case 'storage/retry-limit-exceeded':
-      return 'The file storage service could not be reached.';
+      return 'err.storage.retry';
     case 'storage/unknown':
-      return 'The file storage service is unavailable.';
+      return 'err.storage.unknown';
     default:
-      return 'The CV could not be uploaded.';
+      return 'err.storage.generic';
   }
 };
+const friendlyStorageError = (code) => tEn(storageKey(code));

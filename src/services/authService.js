@@ -7,6 +7,7 @@ import {
   onAuthStateChanged 
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
+import { tEn } from '../i18n';
 
 // Register a new user
 export const registerUser = async (email, password) => {
@@ -21,6 +22,7 @@ export const registerUser = async (email, password) => {
     console.error('Registration error:', error);
     return { 
       success: false, 
+      messageKey: getErrorKey(error.code),
       message: getErrorMessage(error.code) 
     };
   }
@@ -39,6 +41,7 @@ export const signInUser = async (email, password) => {
     console.error('Login error:', error);
     return { 
       success: false, 
+      messageKey: getErrorKey(error.code),
       message: getErrorMessage(error.code) 
     };
   }
@@ -48,14 +51,14 @@ export const signInUser = async (email, password) => {
 export const resetPassword = async (email) => {
   try {
     await sendPasswordResetEmail(auth, email);
-    return { success: true, message: 'If an account exists for that email, a reset link is on its way.' };
+    return { success: true, messageKey: 'auth.resetSent', message: tEn('auth.resetSent') };
   } catch (error) {
     console.error('Reset error:', error);
     // Do not reveal whether the address exists.
     if (error.code === 'auth/user-not-found') {
-      return { success: true, message: 'If an account exists for that email, a reset link is on its way.' };
+      return { success: true, messageKey: 'auth.resetSent', message: tEn('auth.resetSent') };
     }
-    return { success: false, message: getErrorMessage(error.code) };
+    return { success: false, messageKey: getErrorKey(error.code), message: getErrorMessage(error.code) };
   }
 };
 
@@ -63,10 +66,10 @@ export const resetPassword = async (email) => {
 export const signOutUser = async () => {
   try {
     await signOut(auth);
-    return { success: true, message: 'Logged out successfully!' };
+    return { success: true, messageKey: 'auth.loggedOut', message: tEn('auth.loggedOut') };
   } catch (error) {
     console.error('Logout error:', error);
-    return { success: false, message: 'Failed to logout' };
+    return { success: false, messageKey: 'auth.logoutFailed', message: tEn('auth.logoutFailed') };
   }
 };
 
@@ -81,32 +84,21 @@ export const getCurrentUser = () => {
 };
 
 // Helper function to get user-friendly error messages
-const getErrorMessage = (errorCode) => {
-  switch (errorCode) {
-    case 'auth/email-already-in-use':
-      return 'This email is already registered. Please try logging in instead.';
-    case 'auth/weak-password':
-      return 'Password should be at least 6 characters.';
-    case 'auth/invalid-email':
-      return 'Please enter a valid email address.';
-    case 'auth/user-not-found':
-      return 'No account found with this email. Please register first.';
-    case 'auth/wrong-password':
-    case 'auth/invalid-credential':
-    case 'auth/invalid-login-credentials':
-      return 'Incorrect email or password. Please try again.';
-    case 'auth/operation-not-allowed':
-      return 'Email/password sign-in is not enabled for this project. Contact the HPAIR tech team.';
-    case 'auth/network-request-failed':
-      return 'Network error. Check your connection and try again.';
-    case 'auth/user-disabled':
-      return 'This account has been disabled.';
-    case 'auth/too-many-requests':
-      return 'Too many failed attempts. Please try again later.';
-    default:
-      return 'An error occurred. Please try again.';
-  }
+const ERROR_KEYS = {
+  'auth/email-already-in-use': 'auth.err.inUse',
+  'auth/weak-password': 'auth.err.weak',
+  'auth/invalid-email': 'auth.err.invalidEmail',
+  'auth/user-not-found': 'auth.err.notFound',
+  'auth/wrong-password': 'auth.err.wrong',
+  'auth/invalid-credential': 'auth.err.wrong',
+  'auth/invalid-login-credentials': 'auth.err.wrong',
+  'auth/too-many-requests': 'auth.err.tooMany',
+  'auth/operation-not-allowed': 'auth.err.notAllowed',
+  'auth/network-request-failed': 'auth.err.network',
+  'auth/user-disabled': 'auth.err.disabled',
 };
+const getErrorKey = (code) => ERROR_KEYS[code] || 'auth.err.generic';
+const getErrorMessage = (code) => tEn(getErrorKey(code));
 
 const authService = {
   registerUser,

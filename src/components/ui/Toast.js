@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { FiCheckCircle, FiAlertCircle, FiInfo, FiX } from 'react-icons/fi';
+import { useI18n } from '../../i18n';
 
 const ToastContext = createContext(null);
 
@@ -12,6 +13,7 @@ export const useToast = () => {
 const ICONS = { success: FiCheckCircle, error: FiAlertCircle, info: FiInfo };
 
 export const ToastProvider = ({ children }) => {
+  const { t: translate } = useI18n();
   const [toasts, setToasts] = useState([]);
   const counter = useRef(0);
 
@@ -48,7 +50,7 @@ export const ToastProvider = ({ children }) => {
             <div key={t.id} className={`toast toast--${t.type}`} role={t.type === 'error' ? 'alert' : 'status'}>
               <Icon size={18} aria-hidden="true" />
               <span>{t.message}</span>
-              <button type="button" onClick={() => dismiss(t.id)} aria-label="Dismiss notification">
+              <button type="button" onClick={() => dismiss(t.id)} aria-label={translate('toast.dismiss')}>
                 <FiX size={16} />
               </button>
             </div>

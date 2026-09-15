@@ -1,6 +1,7 @@
 import React, { useId } from 'react';
 import { useField } from 'formik';
 import { FiAlertCircle, FiCheck } from 'react-icons/fi';
+import { useI18n } from '../../i18n';
 
 /**
  * Formik-bound field primitives. Every control:
@@ -10,12 +11,14 @@ import { FiAlertCircle, FiCheck } from 'react-icons/fi';
  *  - shows a green check when a touched, non-empty value is valid
  */
 
-const FieldShell = ({ id, label, optional, hint, error, showError, children }) => (
+const FieldShell = ({ id, label, optional, hint, error, showError, children }) => {
+  const { t } = useI18n();
+  return (
   <div className="field">
     {label && (
       <label className="field__label" htmlFor={id}>
         <span>{label}</span>
-        {optional && <span className="field__optional">Optional</span>}
+        {optional && <span className="field__optional">{t('common.optional')}</span>}
       </label>
     )}
     {children}
@@ -30,7 +33,8 @@ const FieldShell = ({ id, label, optional, hint, error, showError, children }) =
       </div>
     ) : null}
   </div>
-);
+  );
+};
 
 const Status = ({ valid, invalid }) => {
   if (invalid) return <span className="field__status field__status--invalid"><FiAlertCircle size={16} aria-hidden="true" /></span>;
@@ -114,8 +118,10 @@ export const TextArea = ({ name, label, optional, hint, maxLength, ...rest }) =>
   );
 };
 
-export const SelectField = ({ name, label, optional, hint, children, placeholder = 'Select…', ...rest }) => {
+export const SelectField = ({ name, label, optional, hint, children, placeholder, ...rest }) => {
   const id = useId();
+  const { t } = useI18n();
+  const ph = placeholder ?? t('common.select');
   const { field, meta, showError, isValid } = useFieldState(name);
   return (
     <FieldShell id={id} label={label} optional={optional} hint={hint} error={meta.error} showError={showError}>
@@ -131,7 +137,7 @@ export const SelectField = ({ name, label, optional, hint, children, placeholder
           value={field.value ?? ''}
           {...rest}
         >
-          <option value="">{placeholder}</option>
+          <option value="">{ph}</option>
           {children}
         </select>
         <Status valid={isValid} invalid={showError} />

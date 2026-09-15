@@ -1,4 +1,27 @@
 import React from 'react';
+import { useI18n } from '../i18n';
+
+const Fallback = ({ error }) => {
+  const { t } = useI18n();
+  return (
+    <div className="container" style={{ paddingBlock: 48 }}>
+      <div className="card card--pad" role="alert">
+        <span className="eyebrow">{t('boundary.eyebrow')}</span>
+        <h2>{t('boundary.title')}</h2>
+        <p style={{ marginTop: 8 }}>{t('boundary.body', { email: 'cqiu@college.harvard.edu' })}</p>
+        <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
+          <button type="button" className="btn btn--primary" style={{ width: 'auto' }} onClick={() => window.location.reload()}>
+            {t('common.reload')}
+          </button>
+        </div>
+        <details style={{ marginTop: 18, fontSize: '0.8rem', color: 'var(--hp-ink-muted)' }}>
+          <summary>{t('boundary.details')}</summary>
+          <pre style={{ whiteSpace: 'pre-wrap', marginTop: 8 }}>{String(error?.message || error)}</pre>
+        </details>
+      </div>
+    </div>
+  );
+};
 
 /** Catches render errors so a bug in one section never blanks the whole page. */
 class ErrorBoundary extends React.Component {
@@ -17,27 +40,7 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (!this.state.error) return this.props.children;
-    return (
-      <div className="container" style={{ paddingBlock: 48 }}>
-        <div className="card card--pad" role="alert">
-          <span className="eyebrow">Something went wrong</span>
-          <h2>This page hit an unexpected error.</h2>
-          <p style={{ marginTop: 8 }}>
-            Your draft is saved on this device. Reload to continue where you left off. If it keeps happening, email{' '}
-            <a href="mailto:cqiu@college.harvard.edu">cqiu@college.harvard.edu</a>.
-          </p>
-          <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
-            <button type="button" className="btn btn--primary" style={{ width: 'auto' }} onClick={() => window.location.reload()}>
-              Reload page
-            </button>
-          </div>
-          <details style={{ marginTop: 18, fontSize: '0.8rem', color: 'var(--hp-ink-muted)' }}>
-            <summary>Technical details</summary>
-            <pre style={{ whiteSpace: 'pre-wrap', marginTop: 8 }}>{String(this.state.error?.message || this.state.error)}</pre>
-          </details>
-        </div>
-      </div>
-    );
+    return <Fallback error={this.state.error} />;
   }
 }
 

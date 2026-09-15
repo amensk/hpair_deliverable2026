@@ -2,19 +2,14 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from './Header';
 import { useAuth } from '../../contexts/AuthContext';
+import { useI18n } from '../../i18n';
 
 // Photo masthead with the transparent header on top, like every hpair.org page.
-const COPY = {
-  login: { eyebrow: 'Delegate Portal', title: 'Delegate Login', sub: 'Sign in to complete your delegate information form for HPAIR 2026.' },
-  form: { eyebrow: 'HPAIR 2026', title: 'Delegate Information Form', sub: 'Four short sections. Your answers save automatically on this device until you submit.' },
-  admin: { eyebrow: 'Admin', title: 'All Submissions', sub: 'Every delegate form submitted to this project, newest first.' },
-};
-
 const Masthead = () => {
   const { user, loading } = useAuth();
+  const { t } = useI18n();
   const { pathname } = useLocation();
   const key = !user ? 'login' : pathname.startsWith('/admin') ? 'admin' : 'form';
-  const copy = COPY[key];
 
   return (
     <div className="masthead" data-compact={key === 'login' ? undefined : 'true'}>
@@ -24,9 +19,9 @@ const Masthead = () => {
       <div className="masthead__content">
         {!loading && (
           <>
-            <span className="masthead__eyebrow">{copy.eyebrow}</span>
-            <h1 className="masthead__title">{copy.title}</h1>
-            <p className="masthead__sub">{copy.sub}</p>
+            <span className="masthead__eyebrow">{t(`masthead.${key}.eyebrow`)}</span>
+            <h1 className="masthead__title">{t(`masthead.${key}.title`)}</h1>
+            <p className="masthead__sub">{t(`masthead.${key}.sub`)}</p>
           </>
         )}
       </div>

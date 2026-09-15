@@ -4,10 +4,12 @@ import Button from './ui/Button';
 import Alert from './ui/Alert';
 import { summaryAsText, summaryAsJSON, downloadBlob, safeFilename, buildMailto, printSummary } from '../utils/summary';
 import { fullName } from '../utils/format';
+import { useI18n } from '../i18n';
 
-const SuccessScreen = ({ values, submissionId, submittedAt, cvStatus, storageMode = 'firestore', dbMessage, onStartAnother }) => {
+const SuccessScreen = ({ values, submissionId, submittedAt, cvStatus, storageMode = 'firestore', dbMessageKey, onStartAnother }) => {
+  const { t, locale } = useI18n();
   const meta = { id: submissionId, submittedAt };
-  const mailHref = buildMailto(values.email, values, meta);
+  const mailHref = buildMailto(values.email, values, meta, t, locale);
   const local = storageMode === 'local';
 
   return (
@@ -16,66 +18,52 @@ const SuccessScreen = ({ values, submissionId, submittedAt, cvStatus, storageMod
         <FiCheck size={30} />
       </span>
       <span className="eyebrow" style={local ? { color: 'var(--hp-warning)' } : undefined}>
-        {local ? 'Form completed · saved on this device' : 'Submission received'}
+        {local ? t('success.local') : t('success.received')}
       </span>
-      <h1>Thank you, {values.preferredName || values.firstName}.</h1>
-      {local ? (
-        <p>
-          Your form is complete and every answer has been kept safely on this device. The submissions database declined the
-          write, so it has <strong>not</strong> reached HPAIR yet. Use <strong>Email me a copy</strong> to send it, or download it below.
-        </p>
-      ) : (
-        <p>
-          Your delegate information form has been submitted. Keep the reference below for your records. The HPAIR team will be
-          in touch by email at <strong>{values.email}</strong>.
-        </p>
-      )}
-      <span className="success__ref">Reference {submissionId}</span>
+      <h1>{t('success.thanks', { name: values.preferredName || values.firstName })}</h1>
+      <p>{local ? t('success.bodyLocal') : t('success.bodyReceived', { email: values.email })}</p>
+      <span className="success__ref">{t('success.reference', { id: submissionId })}</span>
 
       {local && (
         <div style={{ maxWidth: 560, margin: '24px auto 0', textAlign: 'left' }}>
           <Alert type="warning">
-            <strong>Database said:</strong> {dbMessage} This usually means the Firebase project's security rules do not allow
-            writes. Your answers are listed under <em>Your previous submissions</em> below on this device.
+            <strong>{t('success.dbSaid')}</strong> {dbMessageKey ? t(dbMessageKey) : ''} {t('success.dbHint')}
           </Alert>
         </div>
       )}
 
       {cvStatus && cvStatus.success === false && (
         <div style={{ maxWidth: 560, margin: '24px auto 0', textAlign: 'left' }}>
-          <Alert type="warning">
-            Your form was saved, but the CV file itself could not be stored ({cvStatus.message}). We recorded the file name,
-            and you can email it as an attachment using the button below.
-          </Alert>
+          <Alert type="warning">{t('success.cvFail', { message: cvStatus.messageKey ? t(cvStatus.messageKey) : cvStatus.message })}</Alert>
         </div>
       )}
       {cvStatus && cvStatus.success && cvStatus.mode === 'inline' && !local && (
         <div style={{ maxWidth: 560, margin: '24px auto 0', textAlign: 'left' }}>
-          <Alert type="info">The file storage bucket was unavailable, so your CV was embedded directly in the submission record instead.</Alert>
+          <Alert type="info">{t('success.cvInline')}</Alert>
         </div>
       )}
 
       <div className="success__actions">
         <a className="btn btn--primary" href={mailHref}>
-          <FiMail size={18} aria-hidden="true" /> <span>Email me a copy</span>
+          <FiMail size={18} aria-hidden="true" /> <span>{t('success.emailCopy')}</span>
         </a>
-        <Button variant="secondary" icon={FiDownload} onClick={() => downloadBlob(summaryAsText(values, meta), safeFilename(values, 'txt'), 'text/plain')}>
-          Download summary (.txt)
+        <Button variant="secondary" icon={FiDownload} onClick={() => downloadBlob(summaryAsText(values, meta, t, locale), safeFilename(values, 'txt'), 'text/plain')}>
+          {t('success.downloadTxt')}
         </Button>
         <Button variant="secondary" icon={FiCode} onClick={() => downloadBlob(summaryAsJSON(values, meta), safeFilename(values, 'json'), 'application/json')}>
-          Download data (.json)
+          {t('success.downloadJson')}
         </Button>
-        <Button variant="secondary" icon={FiPrinter} onClick={() => printSummary(values, meta)}>
-          Print / save as PDF
+        <Button variant="secondary" icon={FiPrinter} onClick={() => printSummary(values, meta, t, locale)}>
+          {t('success.print')}
         </Button>
       </div>
 
       <div style={{ marginTop: 32 }}>
         <Button variant="ghost" icon={FiPlus} onClick={onStartAnother}>
-          Submit another form
+          {t('success.another')}
         </Button>
       </div>
-      <p style={{ fontSize: '0.8rem', marginTop: 16 }}>Submitted for {fullName(values)}.</p>
+      <p style={{ fontSize: '0.8rem', marginTop: 16 }}>{t('success.submittedFor', { name: fullName(values) })}</p>
     </div>
   );
 };

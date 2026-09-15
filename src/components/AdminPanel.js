@@ -10,6 +10,7 @@ import { countryName } from '../data/countries';
 import { TRACKS } from '../data/languages';
 import { downloadBlob } from '../utils/summary';
 import { downloadDataUrl } from '../utils/file';
+import { useI18n } from '../i18n';
 
 const csvEscape = (v) => {
   const s = v == null ? '' : String(v);
@@ -18,14 +19,15 @@ const csvEscape = (v) => {
 
 const AdminPanel = () => {
   const { user } = useAuth();
+  const { t } = useI18n();
   if (!isAdmin(user?.email)) {
     return (
       <div className="container">
         <div className="card card--pad" role="alert">
-          <span className="eyebrow">Restricted</span>
-          <h2>This page is limited to HPAIR staff.</h2>
-          <p style={{ marginTop: 8 }}>Your account ({user?.email}) is not on the admin list.</p>
-          <Link to="/" className="btn btn--primary" style={{ width: 'auto', marginTop: 20 }}>Back to my form</Link>
+          <span className="eyebrow">{t('admin.restricted')}</span>
+          <h2>{t('admin.restrictedTitle')}</h2>
+          <p style={{ marginTop: 8 }}>{t('admin.restrictedBody', { email: user?.email })}</p>
+          <Link to="/" className="btn btn--primary" style={{ width: 'auto', marginTop: 20 }}>{t('admin.backToForm')}</Link>
         </div>
       </div>
     );
@@ -34,12 +36,15 @@ const AdminPanel = () => {
 };
 
 const AdminTable = ({ user }) => {
+  const { t, locale } = useI18n();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [errorKey, setErrorKey] = useState('');
   const [filter, setFilter] = useState('');
   const [track, setTrack] = useState('');
   const [fetchingCv, setFetchingCv] = useState(null);
+
+  const trackLabel = (v) => (v ? t(`options.track.${v}`) : '');
 
   const downloadCv = async (s) => {
     if (s.cvData) return downloadDataUrl(s.cvData, s.cvName);
@@ -47,15 +52,15 @@ const AdminTable = ({ user }) => {
     const res = await getSubmissionCV(s.id);
     setFetchingCv(null);
     if (res.success) downloadDataUrl(res.data.data, res.data.name || s.cvName);
-    else window.alert(res.message);
+    else window.alert(t(res.messageKey));
   };
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError('');
+    setErrorKey('');
     const res = await getFormSubmissions();
     if (res.success) setSubmissions(res.data);
-    else setError(res.message);
+    else setErrorKey(res.messageKey);
     setLoading(false);
   }, []);
 
@@ -68,29 +73,34 @@ const AdminTable = ({ user }) => {
     return submissions.filter((s) => {
       if (track && s.track !== track) return false;
       if (!q) return true;
-      return [fullName(s), s.email, s.institution, countryName(s.nationality), s.city].filter(Boolean).join(' ').toLowerCase().includes(q);
+      return [fullName(s), s.email, s.institution, countryName(s.nationality, locale), countryName(s.nationality, 'en'), s.city]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(q);
     });
-  }, [submissions, filter, track]);
+  }, [submissions, filter, track, locale]);
 
   const exportCsv = () => {
-    const headers = ['Reference', 'Submitted', 'Name', 'Email', 'Phone', 'Nationality', 'Country', 'City', 'Institution', 'Track', 'Preferred language', 'LinkedIn', 'CV'];
+    const headers = ['Reference', 'Submitted', 'Name', 'Email', 'Phone', 'Nationality', 'Country', 'City', 'Institution', 'Track', 'Preferred language', 'LinkedIn', 'CV', 'Form language'];
     const lines = [headers.join(',')];
     rows.forEach((s) =>
       lines.push(
         [
           s.id,
-          formatDate(s.submittedAt),
+          formatDate(s.submittedAt, 'en'),
           fullName(s),
           s.email,
           formatPhone(s.phoneDial, s.phoneNumber),
-          countryName(s.nationality),
-          countryName(s.country),
+          countryName(s.nationality, 'en'),
+          countryName(s.country, 'en'),
           s.city,
           s.institution,
-          TRACKS.find((t) => t.value === s.track)?.label || s.track,
+          s.track,
           s.preferredLanguage,
           s.linkedinUrl,
           s.cvUrl || (s.cvData || s.cvInline ? `${s.cvName} (embedded)` : s.cvName),
+          s.uiLanguage || '',
         ]
           .map(csvEscape)
           .join(',')
@@ -103,64 +113,57 @@ const AdminTable = ({ user }) => {
     <div className="container">
       <div className="card card--pad">
         <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--hp-ink-muted)' }}>Signed in as {user.email}</span>
+          <span style={{ fontSize: '0.85rem', color: 'var(--hp-ink-muted)' }}>{t('nav.signedInAs', { email: user.email })}</span>
           <Link to="/" className="btn btn--ghost btn--sm" style={{ width: 'auto' }}>
-            <FiArrowLeft size={16} aria-hidden="true" /> <span>Back to my form</span>
+            <FiArrowLeft size={16} aria-hidden="true" /> <span>{t('admin.backToForm')}</span>
           </Link>
         </div>
         <div className="toolbar">
-          <input
-            className="input"
-            type="search"
-            placeholder="Search name, email, institution, country…"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            aria-label="Search submissions"
-          />
-          <select className="input input--select" style={{ maxWidth: 260, minHeight: 42 }} value={track} onChange={(e) => setTrack(e.target.value)} aria-label="Filter by programme">
-            <option value="">All programmes</option>
-            {TRACKS.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
+          <input className="input" type="search" placeholder={t('admin.searchPh')} value={filter} onChange={(e) => setFilter(e.target.value)} aria-label={t('admin.searchAria')} />
+          <select className="input input--select" style={{ maxWidth: 260, minHeight: 42 }} value={track} onChange={(e) => setTrack(e.target.value)} aria-label={t('admin.filterAria')}>
+            <option value="">{t('admin.allProgrammes')}</option>
+            {TRACKS.map((o) => (
+              <option key={o.value} value={o.value}>{t(o.key)}</option>
             ))}
           </select>
           <span style={{ marginLeft: 'auto', fontSize: '0.85rem', color: 'var(--hp-ink-muted)' }}>
-            {loading ? 'Loading…' : `${rows.length} of ${submissions.length}`}
+            {loading ? t('admin.loading') : t('admin.countOf', { shown: rows.length, total: submissions.length })}
           </span>
           <button type="button" className="btn btn--ghost btn--sm" style={{ width: 'auto' }} onClick={load} disabled={loading}>
-            <FiRefreshCw size={16} aria-hidden="true" /> <span>Refresh</span>
+            <FiRefreshCw size={16} aria-hidden="true" /> <span>{t('common.refresh')}</span>
           </button>
           <button type="button" className="btn btn--primary btn--sm" style={{ width: 'auto' }} onClick={exportCsv} disabled={!rows.length}>
-            <FiDownload size={16} aria-hidden="true" /> <span>Export CSV</span>
+            <FiDownload size={16} aria-hidden="true" /> <span>{t('admin.exportCsv')}</span>
           </button>
         </div>
 
-        {error && <Alert type="error">{error}</Alert>}
+        {errorKey && <Alert type="error">{t(errorKey)}</Alert>}
 
         {loading ? (
           <div style={{ display: 'grid', gap: 8 }} aria-busy="true">
             {[0, 1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 44 }} />)}
           </div>
         ) : rows.length === 0 ? (
-          <Alert type="info">No submissions match.</Alert>
+          <Alert type="info">{t('admin.noMatch')}</Alert>
         ) : (
           <div className="table-wrap">
             <table className="data">
               <thead>
                 <tr>
-                  <th>Submitted</th>
-                  <th>Delegate</th>
-                  <th>Contact</th>
-                  <th>Nationality / residence</th>
-                  <th>Institution</th>
-                  <th>Programme</th>
-                  <th>Links</th>
+                  <th>{t('admin.col.submitted')}</th>
+                  <th>{t('admin.col.delegate')}</th>
+                  <th>{t('admin.col.contact')}</th>
+                  <th>{t('admin.col.nationality')}</th>
+                  <th>{t('admin.col.institution')}</th>
+                  <th>{t('admin.col.programme')}</th>
+                  <th>{t('admin.col.links')}</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((s) => (
                   <tr key={s.id}>
                     <td>
-                      {formatDate(s.submittedAt)}
+                      {formatDate(s.submittedAt, locale)}
                       <div style={{ fontSize: '0.72rem', color: 'var(--hp-ink-muted)' }}>{s.id.slice(-8).toUpperCase()}</div>
                     </td>
                     <td>
@@ -172,13 +175,13 @@ const AdminTable = ({ user }) => {
                       <div style={{ fontSize: '0.78rem', color: 'var(--hp-ink-muted)' }}>{formatPhone(s.phoneDial, s.phoneNumber)}</div>
                     </td>
                     <td>
-                      {countryName(s.nationality)}
+                      {countryName(s.nationality, locale)}
                       {s.country && s.country !== s.nationality && (
-                        <div style={{ fontSize: '0.78rem', color: 'var(--hp-ink-muted)' }}>lives in {countryName(s.country)}</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--hp-ink-muted)' }}>{t('admin.livesIn', { country: countryName(s.country, locale) })}</div>
                       )}
                     </td>
                     <td>{s.institution}</td>
-                    <td><span className="tag">{TRACKS.find((t) => t.value === s.track)?.label?.split(' (')[0] || s.track || '—'}</span></td>
+                    <td><span className="tag">{trackLabel(s.track).split(' (')[0] || '—'}</span></td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       {s.linkedinUrl && (
                         <a href={s.linkedinUrl.startsWith('http') ? s.linkedinUrl : `https://${s.linkedinUrl}`} target="_blank" rel="noreferrer" style={{ marginRight: 10 }}>
@@ -189,10 +192,10 @@ const AdminTable = ({ user }) => {
                         <a href={s.cvUrl} target="_blank" rel="noreferrer">CV <FiExternalLink size={12} aria-hidden="true" /></a>
                       ) : s.cvData || s.cvInline ? (
                         <button type="button" className="summary__edit" onClick={() => downloadCv(s)} disabled={fetchingCv === s.id}>
-                          {fetchingCv === s.id ? 'Fetching…' : 'CV (download)'}
+                          {fetchingCv === s.id ? t('subs.fetching') : t('admin.cvDownload')}
                         </button>
                       ) : s.cvName ? (
-                        <span title="File name recorded; upload was not stored">CV: {s.cvName}</span>
+                        <span title={t('admin.cvNameOnlyTitle')}>{t('admin.cvNameOnly', { name: s.cvName })}</span>
                       ) : null}
                     </td>
                   </tr>

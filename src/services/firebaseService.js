@@ -12,21 +12,23 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { tEn } from '../i18n';
 
 const COLLECTION_NAME = 'formSubmissions';
 
-const friendlyError = (code) => {
+const errorKey = (code) => {
   switch (code) {
     case 'permission-denied':
-      return "The database's security rules denied this request (permission denied).";
+      return 'err.db.permission';
     case 'unavailable':
-      return 'The service is temporarily unavailable. Check your connection and try again.';
+      return 'err.db.unavailable';
     case 'deadline-exceeded':
-      return 'The request timed out. Please try again.';
+      return 'err.db.timeout';
     default:
-      return 'Something went wrong. Please try again.';
+      return 'err.db.generic';
   }
 };
+const friendlyError = (code) => tEn(errorKey(code));
 
 /**
  * Submit form data to Firestore.
@@ -58,7 +60,7 @@ export const submitForm = async (formData, inlineCv = null) => {
     return { success: true, id: ref.id, message: 'Form submitted successfully!' };
   } catch (error) {
     console.error('Error submitting form:', error);
-    return { success: false, code: error.code, message: friendlyError(error.code) };
+    return { success: false, code: error.code, messageKey: errorKey(error.code), message: friendlyError(error.code) };
   }
 };
 
@@ -66,11 +68,11 @@ export const submitForm = async (formData, inlineCv = null) => {
 export const getSubmissionCV = async (submissionId) => {
   try {
     const snap = await getDoc(doc(db, COLLECTION_NAME, submissionId, 'files', 'cv'));
-    if (!snap.exists()) return { success: false, message: 'No CV file is stored for this submission.' };
+    if (!snap.exists()) return { success: false, messageKey: 'err.db.noCv', message: tEn('err.db.noCv') };
     return { success: true, data: snap.data() };
   } catch (error) {
     console.error('Error fetching CV:', error);
-    return { success: false, code: error.code, message: friendlyError(error.code) };
+    return { success: false, code: error.code, messageKey: errorKey(error.code), message: friendlyError(error.code) };
   }
 };
 
@@ -88,7 +90,7 @@ export const getFormSubmissions = async (limitCount = 200) => {
     return { success: true, data: snapshotToList(snap) };
   } catch (error) {
     console.error('Error fetching submissions:', error);
-    return { success: false, code: error.code, message: friendlyError(error.code) };
+    return { success: false, code: error.code, messageKey: errorKey(error.code), message: friendlyError(error.code) };
   }
 };
 
@@ -102,7 +104,7 @@ export const getUserSubmissions = async (userId) => {
     return { success: true, data };
   } catch (error) {
     console.error('Error fetching user submissions:', error);
-    return { success: false, code: error.code, message: friendlyError(error.code) };
+    return { success: false, code: error.code, messageKey: errorKey(error.code), message: friendlyError(error.code) };
   }
 };
 
@@ -113,7 +115,7 @@ export const getSubmissionCount = async () => {
     return { success: true, count: snap.size };
   } catch (error) {
     console.error('Error getting submission count:', error);
-    return { success: false, code: error.code, message: friendlyError(error.code) };
+    return { success: false, code: error.code, messageKey: errorKey(error.code), message: friendlyError(error.code) };
   }
 };
 

@@ -7,6 +7,7 @@ import Footer from './components/layout/Footer';
 import Login from './components/Login';
 import MultiStepForm from './components/MultiStepForm';
 import ErrorBoundary from './components/ErrorBoundary';
+import { I18nProvider, useI18n } from './i18n';
 import './App.css';
 
 // The admin table (and its CSV export) is only needed by staff; load it on demand.
@@ -14,13 +15,14 @@ const AdminPanel = lazy(() => import('./components/AdminPanel'));
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
+  const { t } = useI18n();
 
   if (loading) {
     return (
       <div className="container loading-screen" role="status" aria-live="polite">
         <div style={{ display: 'grid', gap: 10, justifyItems: 'center' }}>
           <span className="spinner" aria-hidden="true" />
-          <span>Checking your session…</span>
+          <span>{t('common.loadingSession')}</span>
         </div>
       </div>
     );
@@ -30,13 +32,19 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+const SkipLink = () => {
+  const { t } = useI18n();
+  return <a className="skip-link" href="#main">{t('common.skip')}</a>;
+};
+
 function App() {
   return (
     <AuthProvider>
+      <I18nProvider>
       <ToastProvider>
         <Router>
           <div className="app">
-            <a className="skip-link" href="#main">Skip to main content</a>
+            <SkipLink />
             <Masthead />
             <main className="main" id="main" tabIndex={-1}>
               <ErrorBoundary>
@@ -67,6 +75,7 @@ function App() {
           </div>
         </Router>
       </ToastProvider>
+      </I18nProvider>
     </AuthProvider>
   );
 }

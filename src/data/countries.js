@@ -1,211 +1,128 @@
-// ISO 3166 country list with calling codes. Used for nationality, country of
-// residence, and the phone dial-code selector.
+// ISO 3166-1 alpha-2 codes with calling codes. Every sovereign state plus the
+// inhabited territories delegates are likely to hold documents from.
+// Display names come from Intl.DisplayNames in the active UI language, with
+// these English names as the fallback and as extra search keywords.
 export const COUNTRIES = [
-  { code: 'AF', name: 'Afghanistan', dial: '+93' },
-  { code: 'AL', name: 'Albania', dial: '+355' },
-  { code: 'DZ', name: 'Algeria', dial: '+213' },
-  { code: 'AD', name: 'Andorra', dial: '+376' },
-  { code: 'AO', name: 'Angola', dial: '+244' },
-  { code: 'AG', name: 'Antigua and Barbuda', dial: '+1268' },
-  { code: 'AR', name: 'Argentina', dial: '+54' },
-  { code: 'AM', name: 'Armenia', dial: '+374' },
-  { code: 'AU', name: 'Australia', dial: '+61' },
-  { code: 'AT', name: 'Austria', dial: '+43' },
-  { code: 'AZ', name: 'Azerbaijan', dial: '+994' },
-  { code: 'BS', name: 'Bahamas', dial: '+1242' },
-  { code: 'BH', name: 'Bahrain', dial: '+973' },
-  { code: 'BD', name: 'Bangladesh', dial: '+880' },
-  { code: 'BB', name: 'Barbados', dial: '+1246' },
-  { code: 'BY', name: 'Belarus', dial: '+375' },
-  { code: 'BE', name: 'Belgium', dial: '+32' },
-  { code: 'BZ', name: 'Belize', dial: '+501' },
-  { code: 'BJ', name: 'Benin', dial: '+229' },
-  { code: 'BT', name: 'Bhutan', dial: '+975' },
-  { code: 'BO', name: 'Bolivia', dial: '+591' },
-  { code: 'BA', name: 'Bosnia and Herzegovina', dial: '+387' },
-  { code: 'BW', name: 'Botswana', dial: '+267' },
-  { code: 'BR', name: 'Brazil', dial: '+55' },
-  { code: 'BN', name: 'Brunei', dial: '+673' },
-  { code: 'BG', name: 'Bulgaria', dial: '+359' },
-  { code: 'BF', name: 'Burkina Faso', dial: '+226' },
-  { code: 'BI', name: 'Burundi', dial: '+257' },
-  { code: 'KH', name: 'Cambodia', dial: '+855' },
-  { code: 'CM', name: 'Cameroon', dial: '+237' },
-  { code: 'CA', name: 'Canada', dial: '+1' },
-  { code: 'CV', name: 'Cape Verde', dial: '+238' },
-  { code: 'CF', name: 'Central African Republic', dial: '+236' },
-  { code: 'TD', name: 'Chad', dial: '+235' },
-  { code: 'CL', name: 'Chile', dial: '+56' },
-  { code: 'CN', name: 'China', dial: '+86' },
-  { code: 'CO', name: 'Colombia', dial: '+57' },
-  { code: 'KM', name: 'Comoros', dial: '+269' },
-  { code: 'CG', name: 'Congo', dial: '+242' },
-  { code: 'CD', name: 'Congo (DRC)', dial: '+243' },
-  { code: 'CR', name: 'Costa Rica', dial: '+506' },
-  { code: 'CI', name: "Côte d'Ivoire", dial: '+225' },
-  { code: 'HR', name: 'Croatia', dial: '+385' },
-  { code: 'CU', name: 'Cuba', dial: '+53' },
-  { code: 'CY', name: 'Cyprus', dial: '+357' },
-  { code: 'CZ', name: 'Czechia', dial: '+420' },
-  { code: 'DK', name: 'Denmark', dial: '+45' },
-  { code: 'DJ', name: 'Djibouti', dial: '+253' },
-  { code: 'DM', name: 'Dominica', dial: '+1767' },
-  { code: 'DO', name: 'Dominican Republic', dial: '+1809' },
-  { code: 'EC', name: 'Ecuador', dial: '+593' },
-  { code: 'EG', name: 'Egypt', dial: '+20' },
-  { code: 'SV', name: 'El Salvador', dial: '+503' },
-  { code: 'GQ', name: 'Equatorial Guinea', dial: '+240' },
-  { code: 'ER', name: 'Eritrea', dial: '+291' },
-  { code: 'EE', name: 'Estonia', dial: '+372' },
-  { code: 'SZ', name: 'Eswatini', dial: '+268' },
-  { code: 'ET', name: 'Ethiopia', dial: '+251' },
-  { code: 'FJ', name: 'Fiji', dial: '+679' },
-  { code: 'FI', name: 'Finland', dial: '+358' },
-  { code: 'FR', name: 'France', dial: '+33' },
-  { code: 'GA', name: 'Gabon', dial: '+241' },
-  { code: 'GM', name: 'Gambia', dial: '+220' },
-  { code: 'GE', name: 'Georgia', dial: '+995' },
-  { code: 'DE', name: 'Germany', dial: '+49' },
-  { code: 'GH', name: 'Ghana', dial: '+233' },
-  { code: 'GR', name: 'Greece', dial: '+30' },
-  { code: 'GD', name: 'Grenada', dial: '+1473' },
-  { code: 'GT', name: 'Guatemala', dial: '+502' },
-  { code: 'GN', name: 'Guinea', dial: '+224' },
-  { code: 'GW', name: 'Guinea-Bissau', dial: '+245' },
-  { code: 'GY', name: 'Guyana', dial: '+592' },
-  { code: 'HT', name: 'Haiti', dial: '+509' },
-  { code: 'HN', name: 'Honduras', dial: '+504' },
-  { code: 'HK', name: 'Hong Kong SAR', dial: '+852' },
-  { code: 'HU', name: 'Hungary', dial: '+36' },
-  { code: 'IS', name: 'Iceland', dial: '+354' },
-  { code: 'IN', name: 'India', dial: '+91' },
-  { code: 'ID', name: 'Indonesia', dial: '+62' },
-  { code: 'IR', name: 'Iran', dial: '+98' },
-  { code: 'IQ', name: 'Iraq', dial: '+964' },
-  { code: 'IE', name: 'Ireland', dial: '+353' },
-  { code: 'IL', name: 'Israel', dial: '+972' },
-  { code: 'IT', name: 'Italy', dial: '+39' },
-  { code: 'JM', name: 'Jamaica', dial: '+1876' },
-  { code: 'JP', name: 'Japan', dial: '+81' },
-  { code: 'JO', name: 'Jordan', dial: '+962' },
-  { code: 'KZ', name: 'Kazakhstan', dial: '+7' },
-  { code: 'KE', name: 'Kenya', dial: '+254' },
-  { code: 'KI', name: 'Kiribati', dial: '+686' },
-  { code: 'KW', name: 'Kuwait', dial: '+965' },
-  { code: 'KG', name: 'Kyrgyzstan', dial: '+996' },
-  { code: 'LA', name: 'Laos', dial: '+856' },
-  { code: 'LV', name: 'Latvia', dial: '+371' },
-  { code: 'LB', name: 'Lebanon', dial: '+961' },
-  { code: 'LS', name: 'Lesotho', dial: '+266' },
-  { code: 'LR', name: 'Liberia', dial: '+231' },
-  { code: 'LY', name: 'Libya', dial: '+218' },
-  { code: 'LI', name: 'Liechtenstein', dial: '+423' },
-  { code: 'LT', name: 'Lithuania', dial: '+370' },
-  { code: 'LU', name: 'Luxembourg', dial: '+352' },
-  { code: 'MO', name: 'Macao SAR', dial: '+853' },
-  { code: 'MG', name: 'Madagascar', dial: '+261' },
-  { code: 'MW', name: 'Malawi', dial: '+265' },
-  { code: 'MY', name: 'Malaysia', dial: '+60' },
-  { code: 'MV', name: 'Maldives', dial: '+960' },
-  { code: 'ML', name: 'Mali', dial: '+223' },
-  { code: 'MT', name: 'Malta', dial: '+356' },
-  { code: 'MH', name: 'Marshall Islands', dial: '+692' },
-  { code: 'MR', name: 'Mauritania', dial: '+222' },
-  { code: 'MU', name: 'Mauritius', dial: '+230' },
-  { code: 'MX', name: 'Mexico', dial: '+52' },
-  { code: 'FM', name: 'Micronesia', dial: '+691' },
-  { code: 'MD', name: 'Moldova', dial: '+373' },
-  { code: 'MC', name: 'Monaco', dial: '+377' },
-  { code: 'MN', name: 'Mongolia', dial: '+976' },
-  { code: 'ME', name: 'Montenegro', dial: '+382' },
-  { code: 'MA', name: 'Morocco', dial: '+212' },
-  { code: 'MZ', name: 'Mozambique', dial: '+258' },
-  { code: 'MM', name: 'Myanmar', dial: '+95' },
-  { code: 'NA', name: 'Namibia', dial: '+264' },
-  { code: 'NR', name: 'Nauru', dial: '+674' },
-  { code: 'NP', name: 'Nepal', dial: '+977' },
-  { code: 'NL', name: 'Netherlands', dial: '+31' },
-  { code: 'NZ', name: 'New Zealand', dial: '+64' },
-  { code: 'NI', name: 'Nicaragua', dial: '+505' },
-  { code: 'NE', name: 'Niger', dial: '+227' },
-  { code: 'NG', name: 'Nigeria', dial: '+234' },
-  { code: 'KP', name: 'North Korea', dial: '+850' },
-  { code: 'MK', name: 'North Macedonia', dial: '+389' },
-  { code: 'NO', name: 'Norway', dial: '+47' },
-  { code: 'OM', name: 'Oman', dial: '+968' },
-  { code: 'PK', name: 'Pakistan', dial: '+92' },
-  { code: 'PW', name: 'Palau', dial: '+680' },
-  { code: 'PS', name: 'Palestine', dial: '+970' },
-  { code: 'PA', name: 'Panama', dial: '+507' },
-  { code: 'PG', name: 'Papua New Guinea', dial: '+675' },
-  { code: 'PY', name: 'Paraguay', dial: '+595' },
-  { code: 'PE', name: 'Peru', dial: '+51' },
-  { code: 'PH', name: 'Philippines', dial: '+63' },
-  { code: 'PL', name: 'Poland', dial: '+48' },
-  { code: 'PT', name: 'Portugal', dial: '+351' },
-  { code: 'PR', name: 'Puerto Rico', dial: '+1787' },
-  { code: 'QA', name: 'Qatar', dial: '+974' },
-  { code: 'RO', name: 'Romania', dial: '+40' },
-  { code: 'RU', name: 'Russia', dial: '+7' },
-  { code: 'RW', name: 'Rwanda', dial: '+250' },
-  { code: 'KN', name: 'Saint Kitts and Nevis', dial: '+1869' },
-  { code: 'LC', name: 'Saint Lucia', dial: '+1758' },
-  { code: 'VC', name: 'Saint Vincent and the Grenadines', dial: '+1784' },
-  { code: 'WS', name: 'Samoa', dial: '+685' },
-  { code: 'SM', name: 'San Marino', dial: '+378' },
-  { code: 'ST', name: 'São Tomé and Príncipe', dial: '+239' },
-  { code: 'SA', name: 'Saudi Arabia', dial: '+966' },
-  { code: 'SN', name: 'Senegal', dial: '+221' },
-  { code: 'RS', name: 'Serbia', dial: '+381' },
-  { code: 'SC', name: 'Seychelles', dial: '+248' },
-  { code: 'SL', name: 'Sierra Leone', dial: '+232' },
-  { code: 'SG', name: 'Singapore', dial: '+65' },
-  { code: 'SK', name: 'Slovakia', dial: '+421' },
-  { code: 'SI', name: 'Slovenia', dial: '+386' },
-  { code: 'SB', name: 'Solomon Islands', dial: '+677' },
-  { code: 'SO', name: 'Somalia', dial: '+252' },
-  { code: 'ZA', name: 'South Africa', dial: '+27' },
-  { code: 'KR', name: 'South Korea', dial: '+82' },
-  { code: 'SS', name: 'South Sudan', dial: '+211' },
-  { code: 'ES', name: 'Spain', dial: '+34' },
-  { code: 'LK', name: 'Sri Lanka', dial: '+94' },
-  { code: 'SD', name: 'Sudan', dial: '+249' },
-  { code: 'SR', name: 'Suriname', dial: '+597' },
-  { code: 'SE', name: 'Sweden', dial: '+46' },
-  { code: 'CH', name: 'Switzerland', dial: '+41' },
-  { code: 'SY', name: 'Syria', dial: '+963' },
-  { code: 'TW', name: 'Taiwan', dial: '+886' },
-  { code: 'TJ', name: 'Tajikistan', dial: '+992' },
-  { code: 'TZ', name: 'Tanzania', dial: '+255' },
-  { code: 'TH', name: 'Thailand', dial: '+66' },
-  { code: 'TL', name: 'Timor-Leste', dial: '+670' },
-  { code: 'TG', name: 'Togo', dial: '+228' },
-  { code: 'TO', name: 'Tonga', dial: '+676' },
-  { code: 'TT', name: 'Trinidad and Tobago', dial: '+1868' },
-  { code: 'TN', name: 'Tunisia', dial: '+216' },
-  { code: 'TR', name: 'Türkiye', dial: '+90' },
-  { code: 'TM', name: 'Turkmenistan', dial: '+993' },
-  { code: 'TV', name: 'Tuvalu', dial: '+688' },
-  { code: 'UG', name: 'Uganda', dial: '+256' },
-  { code: 'UA', name: 'Ukraine', dial: '+380' },
-  { code: 'AE', name: 'United Arab Emirates', dial: '+971' },
-  { code: 'GB', name: 'United Kingdom', dial: '+44' },
-  { code: 'US', name: 'United States', dial: '+1' },
-  { code: 'UY', name: 'Uruguay', dial: '+598' },
-  { code: 'UZ', name: 'Uzbekistan', dial: '+998' },
-  { code: 'VU', name: 'Vanuatu', dial: '+678' },
-  { code: 'VA', name: 'Vatican City', dial: '+379' },
-  { code: 'VE', name: 'Venezuela', dial: '+58' },
-  { code: 'VN', name: 'Vietnam', dial: '+84' },
-  { code: 'YE', name: 'Yemen', dial: '+967' },
-  { code: 'ZM', name: 'Zambia', dial: '+260' },
-  { code: 'ZW', name: 'Zimbabwe', dial: '+263' },
-];
+  ['AF', 'Afghanistan', '+93'], ['AX', 'Åland Islands', '+358'], ['AL', 'Albania', '+355'], ['DZ', 'Algeria', '+213'],
+  ['AS', 'American Samoa', '+1684'], ['AD', 'Andorra', '+376'], ['AO', 'Angola', '+244'], ['AI', 'Anguilla', '+1264'],
+  ['AG', 'Antigua and Barbuda', '+1268'], ['AR', 'Argentina', '+54'], ['AM', 'Armenia', '+374'], ['AW', 'Aruba', '+297'],
+  ['AU', 'Australia', '+61'], ['AT', 'Austria', '+43'], ['AZ', 'Azerbaijan', '+994'], ['BS', 'Bahamas', '+1242'],
+  ['BH', 'Bahrain', '+973'], ['BD', 'Bangladesh', '+880'], ['BB', 'Barbados', '+1246'], ['BY', 'Belarus', '+375'],
+  ['BE', 'Belgium', '+32'], ['BZ', 'Belize', '+501'], ['BJ', 'Benin', '+229'], ['BM', 'Bermuda', '+1441'],
+  ['BT', 'Bhutan', '+975'], ['BO', 'Bolivia', '+591'], ['BQ', 'Caribbean Netherlands', '+599'], ['BA', 'Bosnia and Herzegovina', '+387'],
+  ['BW', 'Botswana', '+267'], ['BR', 'Brazil', '+55'], ['IO', 'British Indian Ocean Territory', '+246'], ['VG', 'British Virgin Islands', '+1284'],
+  ['BN', 'Brunei', '+673'], ['BG', 'Bulgaria', '+359'], ['BF', 'Burkina Faso', '+226'], ['BI', 'Burundi', '+257'],
+  ['KH', 'Cambodia', '+855'], ['CM', 'Cameroon', '+237'], ['CA', 'Canada', '+1'], ['CV', 'Cape Verde', '+238'],
+  ['KY', 'Cayman Islands', '+1345'], ['CF', 'Central African Republic', '+236'], ['TD', 'Chad', '+235'], ['CL', 'Chile', '+56'],
+  ['CN', 'China', '+86'], ['CX', 'Christmas Island', '+61'], ['CC', 'Cocos (Keeling) Islands', '+61'], ['CO', 'Colombia', '+57'],
+  ['KM', 'Comoros', '+269'], ['CG', 'Congo - Brazzaville', '+242'], ['CD', 'Congo - Kinshasa', '+243'], ['CK', 'Cook Islands', '+682'],
+  ['CR', 'Costa Rica', '+506'], ['CI', "Côte d'Ivoire", '+225'], ['HR', 'Croatia', '+385'], ['CU', 'Cuba', '+53'],
+  ['CW', 'Curaçao', '+599'], ['CY', 'Cyprus', '+357'], ['CZ', 'Czechia', '+420'], ['DK', 'Denmark', '+45'],
+  ['DJ', 'Djibouti', '+253'], ['DM', 'Dominica', '+1767'], ['DO', 'Dominican Republic', '+1809'], ['EC', 'Ecuador', '+593'],
+  ['EG', 'Egypt', '+20'], ['SV', 'El Salvador', '+503'], ['GQ', 'Equatorial Guinea', '+240'], ['ER', 'Eritrea', '+291'],
+  ['EE', 'Estonia', '+372'], ['SZ', 'Eswatini', '+268'], ['ET', 'Ethiopia', '+251'], ['FK', 'Falkland Islands', '+500'],
+  ['FO', 'Faroe Islands', '+298'], ['FJ', 'Fiji', '+679'], ['FI', 'Finland', '+358'], ['FR', 'France', '+33'],
+  ['GF', 'French Guiana', '+594'], ['PF', 'French Polynesia', '+689'], ['GA', 'Gabon', '+241'], ['GM', 'Gambia', '+220'],
+  ['GE', 'Georgia', '+995'], ['DE', 'Germany', '+49'], ['GH', 'Ghana', '+233'], ['GI', 'Gibraltar', '+350'],
+  ['GR', 'Greece', '+30'], ['GL', 'Greenland', '+299'], ['GD', 'Grenada', '+1473'], ['GP', 'Guadeloupe', '+590'],
+  ['GU', 'Guam', '+1671'], ['GT', 'Guatemala', '+502'], ['GG', 'Guernsey', '+44'], ['GN', 'Guinea', '+224'],
+  ['GW', 'Guinea-Bissau', '+245'], ['GY', 'Guyana', '+592'], ['HT', 'Haiti', '+509'], ['HN', 'Honduras', '+504'],
+  ['HK', 'Hong Kong SAR China', '+852'], ['HU', 'Hungary', '+36'], ['IS', 'Iceland', '+354'], ['IN', 'India', '+91'],
+  ['ID', 'Indonesia', '+62'], ['IR', 'Iran', '+98'], ['IQ', 'Iraq', '+964'], ['IE', 'Ireland', '+353'],
+  ['IM', 'Isle of Man', '+44'], ['IL', 'Israel', '+972'], ['IT', 'Italy', '+39'], ['JM', 'Jamaica', '+1876'],
+  ['JP', 'Japan', '+81'], ['JE', 'Jersey', '+44'], ['JO', 'Jordan', '+962'], ['KZ', 'Kazakhstan', '+7'],
+  ['KE', 'Kenya', '+254'], ['KI', 'Kiribati', '+686'], ['XK', 'Kosovo', '+383'], ['KW', 'Kuwait', '+965'],
+  ['KG', 'Kyrgyzstan', '+996'], ['LA', 'Laos', '+856'], ['LV', 'Latvia', '+371'], ['LB', 'Lebanon', '+961'],
+  ['LS', 'Lesotho', '+266'], ['LR', 'Liberia', '+231'], ['LY', 'Libya', '+218'], ['LI', 'Liechtenstein', '+423'],
+  ['LT', 'Lithuania', '+370'], ['LU', 'Luxembourg', '+352'], ['MO', 'Macao SAR China', '+853'], ['MG', 'Madagascar', '+261'],
+  ['MW', 'Malawi', '+265'], ['MY', 'Malaysia', '+60'], ['MV', 'Maldives', '+960'], ['ML', 'Mali', '+223'],
+  ['MT', 'Malta', '+356'], ['MH', 'Marshall Islands', '+692'], ['MQ', 'Martinique', '+596'], ['MR', 'Mauritania', '+222'],
+  ['MU', 'Mauritius', '+230'], ['YT', 'Mayotte', '+262'], ['MX', 'Mexico', '+52'], ['FM', 'Micronesia', '+691'],
+  ['MD', 'Moldova', '+373'], ['MC', 'Monaco', '+377'], ['MN', 'Mongolia', '+976'], ['ME', 'Montenegro', '+382'],
+  ['MS', 'Montserrat', '+1664'], ['MA', 'Morocco', '+212'], ['MZ', 'Mozambique', '+258'], ['MM', 'Myanmar (Burma)', '+95'],
+  ['NA', 'Namibia', '+264'], ['NR', 'Nauru', '+674'], ['NP', 'Nepal', '+977'], ['NL', 'Netherlands', '+31'],
+  ['NC', 'New Caledonia', '+687'], ['NZ', 'New Zealand', '+64'], ['NI', 'Nicaragua', '+505'], ['NE', 'Niger', '+227'],
+  ['NG', 'Nigeria', '+234'], ['NU', 'Niue', '+683'], ['NF', 'Norfolk Island', '+672'], ['KP', 'North Korea', '+850'],
+  ['MK', 'North Macedonia', '+389'], ['MP', 'Northern Mariana Islands', '+1670'], ['NO', 'Norway', '+47'], ['OM', 'Oman', '+968'],
+  ['PK', 'Pakistan', '+92'], ['PW', 'Palau', '+680'], ['PS', 'Palestinian Territories', '+970'], ['PA', 'Panama', '+507'],
+  ['PG', 'Papua New Guinea', '+675'], ['PY', 'Paraguay', '+595'], ['PE', 'Peru', '+51'], ['PH', 'Philippines', '+63'],
+  ['PN', 'Pitcairn Islands', '+64'], ['PL', 'Poland', '+48'], ['PT', 'Portugal', '+351'], ['PR', 'Puerto Rico', '+1787'],
+  ['QA', 'Qatar', '+974'], ['RE', 'Réunion', '+262'], ['RO', 'Romania', '+40'], ['RU', 'Russia', '+7'],
+  ['RW', 'Rwanda', '+250'], ['WS', 'Samoa', '+685'], ['SM', 'San Marino', '+378'], ['ST', 'São Tomé and Príncipe', '+239'],
+  ['SA', 'Saudi Arabia', '+966'], ['SN', 'Senegal', '+221'], ['RS', 'Serbia', '+381'], ['SC', 'Seychelles', '+248'],
+  ['SL', 'Sierra Leone', '+232'], ['SG', 'Singapore', '+65'], ['SX', 'Sint Maarten', '+1721'], ['SK', 'Slovakia', '+421'],
+  ['SI', 'Slovenia', '+386'], ['SB', 'Solomon Islands', '+677'], ['SO', 'Somalia', '+252'], ['ZA', 'South Africa', '+27'],
+  ['KR', 'South Korea', '+82'], ['SS', 'South Sudan', '+211'], ['ES', 'Spain', '+34'], ['LK', 'Sri Lanka', '+94'],
+  ['BL', 'St. Barthélemy', '+590'], ['SH', 'St. Helena', '+290'], ['KN', 'St. Kitts and Nevis', '+1869'], ['LC', 'St. Lucia', '+1758'],
+  ['MF', 'St. Martin', '+590'], ['PM', 'St. Pierre and Miquelon', '+508'], ['VC', 'St. Vincent and Grenadines', '+1784'], ['SD', 'Sudan', '+249'],
+  ['SR', 'Suriname', '+597'], ['SJ', 'Svalbard and Jan Mayen', '+47'], ['SE', 'Sweden', '+46'], ['CH', 'Switzerland', '+41'],
+  ['SY', 'Syria', '+963'], ['TW', 'Taiwan', '+886'], ['TJ', 'Tajikistan', '+992'], ['TZ', 'Tanzania', '+255'],
+  ['TH', 'Thailand', '+66'], ['TL', 'Timor-Leste', '+670'], ['TG', 'Togo', '+228'], ['TK', 'Tokelau', '+690'],
+  ['TO', 'Tonga', '+676'], ['TT', 'Trinidad and Tobago', '+1868'], ['TN', 'Tunisia', '+216'], ['TR', 'Türkiye', '+90'],
+  ['TM', 'Turkmenistan', '+993'], ['TC', 'Turks and Caicos Islands', '+1649'], ['TV', 'Tuvalu', '+688'], ['UM', 'U.S. Outlying Islands', '+1'],
+  ['VI', 'U.S. Virgin Islands', '+1340'], ['UG', 'Uganda', '+256'], ['UA', 'Ukraine', '+380'], ['AE', 'United Arab Emirates', '+971'],
+  ['GB', 'United Kingdom', '+44'], ['US', 'United States', '+1'], ['UY', 'Uruguay', '+598'], ['UZ', 'Uzbekistan', '+998'],
+  ['VU', 'Vanuatu', '+678'], ['VA', 'Vatican City', '+379'], ['VE', 'Venezuela', '+58'], ['VN', 'Vietnam', '+84'],
+  ['WF', 'Wallis and Futuna', '+681'], ['EH', 'Western Sahara', '+212'], ['YE', 'Yemen', '+967'], ['ZM', 'Zambia', '+260'],
+  ['ZW', 'Zimbabwe', '+263'],
+].map(([code, name, dial]) => ({ code, name, dial }));
 
-export const countryByCode = (code) => COUNTRIES.find((c) => c.code === code);
-export const countryName = (code) => countryByCode(code)?.name || code || '';
+const byCode = new Map(COUNTRIES.map((c) => [c.code, c]));
+export const countryByCode = (code) => byCode.get(code);
 
-// Unique dial codes, sorted numerically, each labelled with the country.
-export const DIAL_CODES = COUNTRIES
-  .map((c) => ({ value: `${c.code}:${c.dial}`, dial: c.dial, code: c.code, label: `${c.code} ${c.dial}` }))
-  .sort((a, b) => a.code.localeCompare(b.code));
+/** Regional-indicator flag emoji for an ISO code. */
+export const flagEmoji = (code) =>
+  code && code.length === 2 ? String.fromCodePoint(...[...code.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)) : '';
+
+const displayNamesCache = new Map();
+const regionNames = (locale) => {
+  if (!displayNamesCache.has(locale)) {
+    let dn = null;
+    try {
+      dn = typeof Intl !== 'undefined' && Intl.DisplayNames ? new Intl.DisplayNames([locale], { type: 'region' }) : null;
+    } catch {
+      dn = null;
+    }
+    displayNamesCache.set(locale, dn);
+  }
+  return displayNamesCache.get(locale);
+};
+
+/** Localised country name; falls back to the English name, then the code. */
+export const countryName = (code, locale = 'en') => {
+  if (!code) return '';
+  const c = byCode.get(code);
+  if (!c) return code; // unknown/legacy value: never ask Intl for it
+  const dn = regionNames(locale);
+  if (dn) {
+    try {
+      const n = dn.of(code);
+      if (n && n !== code) return n;
+    } catch {
+      /* unsupported code */
+    }
+  }
+  return c ? c.name : code;
+};
+
+/** Options for a country combobox in the given locale (sorted by localised name). */
+export const countryOptions = (locale = 'en') =>
+  COUNTRIES.map((c) => ({
+    value: c.code,
+    label: countryName(c.code, locale),
+    prefix: flagEmoji(c.code),
+    keywords: [c.name, c.code],
+  })).sort((a, b) => a.label.localeCompare(b.label, locale));
+
+/** Dial-code options: "+65" labelled with the country, searchable by either. */
+export const dialOptions = (locale = 'en') =>
+  COUNTRIES.map((c) => ({
+    value: `${c.code}:${c.dial}`,
+    label: c.dial,
+    description: countryName(c.code, locale),
+    prefix: flagEmoji(c.code),
+    keywords: [c.name, c.code, c.dial.replace('+', '')],
+  })).sort((a, b) => a.description.localeCompare(b.description, locale));
+
+// Backwards-compatible alias
+export const DIAL_CODES = dialOptions('en');

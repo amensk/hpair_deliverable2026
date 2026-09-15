@@ -1,17 +1,18 @@
 import { buildSummarySections, fullName, formatDate } from './format';
+import { tEn } from '../i18n';
 
 const escapeHtml = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-export const summaryAsText = (values, meta = {}) => {
+export const summaryAsText = (values, meta = {}, t = tEn, locale = 'en') => {
   const lines = [];
-  lines.push('HPAIR DELEGATE INFORMATION FORM');
-  lines.push('Harvard College Project for Asian and International Relations');
+  lines.push(t('summary.docTitle'));
+  lines.push(t('summary.org'));
   lines.push('');
-  if (meta.id) lines.push(`Reference: ${meta.id}`);
-  lines.push(`Submitted: ${meta.submittedAt ? formatDate(meta.submittedAt) : new Date().toLocaleString()}`);
+  if (meta.id) lines.push(`${t('summary.reference')}: ${meta.id}`);
+  lines.push(`${t('summary.submitted')}: ${meta.submittedAt ? formatDate(meta.submittedAt, locale) : new Date().toLocaleString(locale)}`);
   lines.push('');
-  buildSummarySections(values).forEach((section) => {
+  buildSummarySections(values, t, locale).forEach((section) => {
     lines.push(section.title.toUpperCase());
     lines.push('-'.repeat(section.title.length));
     section.rows.forEach(([k, v]) => lines.push(`${k}: ${v}`));
@@ -25,7 +26,7 @@ export const summaryAsJSON = (values, meta = {}) => {
   return JSON.stringify(
     {
       reference: meta.id || null,
-      submittedAt: meta.submittedAt ? formatDate(meta.submittedAt) : new Date().toISOString(),
+      submittedAt: meta.submittedAt ? new Date(meta.submittedAt).toISOString() : new Date().toISOString(),
       ...rest,
       cv: cv ? { name: cv.name, size: cv.size, type: cv.type } : values.cvName ? { name: values.cvName } : null,
     },
@@ -49,18 +50,18 @@ export const downloadBlob = (content, filename, type) => {
 export const safeFilename = (values, ext) =>
   `HPAIR-${(fullName(values) || 'submission').replace(/[^A-Za-z0-9]+/g, '-')}.${ext}`;
 
-export const buildMailto = (to, values, meta = {}) => {
-  const subject = `HPAIR delegate form - ${fullName(values)}${meta.id ? ` (${meta.id.slice(-8)})` : ''}`;
-  const body = summaryAsText(values, meta);
+export const buildMailto = (to, values, meta = {}, t = tEn, locale = 'en') => {
+  const subject = `${t('summary.mailSubject', { name: fullName(values) })}${meta.id ? ` (${meta.id.slice(-8)})` : ''}`;
+  const body = summaryAsText(values, meta, t, locale);
   // mailto bodies are limited by clients; keep under ~1800 chars for safety
-  const trimmed = body.length > 1800 ? `${body.slice(0, 1750)}\n\n[Summary truncated - download the full copy from the portal]` : body;
+  const trimmed = body.length > 1800 ? `${body.slice(0, 1750)}\n\n${t('summary.truncated')}` : body;
   return `mailto:${encodeURIComponent(to || '')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(trimmed)}`;
 };
 
 /** Opens a print-friendly window with the summary so the user can Save as PDF. */
-export const printSummary = (values, meta = {}) => {
-  const sections = buildSummarySections(values);
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>HPAIR form - ${escapeHtml(fullName(values))}</title>
+export const printSummary = (values, meta = {}, t = tEn, locale = 'en') => {
+  const sections = buildSummarySections(values, t, locale);
+  const html = `<!doctype html><html lang="${escapeHtml(locale)}"><head><meta charset="utf-8"><title>HPAIR - ${escapeHtml(fullName(values))}</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     body{font-family:Poppins,Helvetica,Arial,sans-serif;color:#171716;margin:40px;font-size:13px;line-height:1.5}
@@ -74,9 +75,9 @@ export const printSummary = (values, meta = {}) => {
     .ref{display:inline-block;margin-top:8px;padding:4px 8px;background:#f4f2ef;font-size:12px}
     @media print{body{margin:16mm}}
   </style></head><body>
-  <header><h1>HPAIR Delegate Information Form</h1><p>Harvard College Project for Asian and International Relations</p>
-  ${meta.id ? `<span class="ref">Reference ${escapeHtml(meta.id)}</span>` : ''}
-  <p>Submitted ${escapeHtml(meta.submittedAt ? formatDate(meta.submittedAt) : new Date().toLocaleString())}</p></header>
+  <header><h1>${escapeHtml(t('summary.docTitleCase'))}</h1><p>${escapeHtml(t('summary.org'))}</p>
+  ${meta.id ? `<span class="ref">${escapeHtml(t('summary.reference'))} ${escapeHtml(meta.id)}</span>` : ''}
+  <p>${escapeHtml(t('summary.submitted'))} ${escapeHtml(meta.submittedAt ? formatDate(meta.submittedAt, locale) : new Date().toLocaleString(locale))}</p></header>
   ${sections
     .map(
       (s) => `<h2>${escapeHtml(s.title)}</h2><table>${s.rows

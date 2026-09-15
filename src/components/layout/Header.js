@@ -5,40 +5,43 @@ import { useAuth } from '../../contexts/AuthContext';
 import { signOutUser } from '../../services/authService';
 import { useToast } from '../ui/Toast';
 import { isAdmin } from '../../utils/admin';
+import { useI18n } from '../../i18n';
+import LanguageSwitcher from '../ui/LanguageSwitcher';
 
 // Mirrors the hpair.org primary navigation (same items, same dropdowns),
 // followed by the portal's own links when signed in.
 const HPAIR = 'https://www.hpair.org';
 const NAV = [
-  { label: 'Home', href: `${HPAIR}/` },
+  { key: 'nav.home', href: `${HPAIR}/` },
   {
-    label: 'About Us',
+    key: 'nav.aboutUs',
     items: [
-      { label: 'Our Team', href: `${HPAIR}/our-team` },
-      { label: 'Board of Advisors', href: `${HPAIR}/advisors` },
+      { key: 'nav.ourTeam', href: `${HPAIR}/our-team` },
+      { key: 'nav.boardOfAdvisors', href: `${HPAIR}/advisors` },
     ],
   },
   {
-    label: 'Conferences',
+    key: 'nav.conferences',
     items: [
-      { label: 'HPAIR Conference', href: `${HPAIR}/hconf` },
-      { label: 'Asia Conference', href: `${HPAIR}/aconf` },
-      { label: 'Virtual Conference', href: `${HPAIR}/vconf` },
-      { label: 'Youth Leadership Summit', href: `${HPAIR}/hyls` },
+      { key: 'nav.hpairConference', href: `${HPAIR}/hconf` },
+      { key: 'nav.asiaConference', href: `${HPAIR}/aconf` },
+      { key: 'nav.virtualConference', href: `${HPAIR}/vconf` },
+      { key: 'nav.youthLeadershipSummit', href: `${HPAIR}/hyls` },
     ],
   },
-  { label: 'Partner With Us', href: `${HPAIR}/partner-with-us` },
-  { label: 'FAQs', href: `${HPAIR}/faqs` },
+  { key: 'nav.partnerWithUs', href: `${HPAIR}/partner-with-us` },
+  { key: 'nav.faqs', href: `${HPAIR}/faqs` },
 ];
 
 const Header = () => {
   const { user } = useAuth();
   const toast = useToast();
+  const { t } = useI18n();
 
   const handleLogout = async () => {
     const res = await signOutUser();
-    if (res.success) toast.info('You have been logged out.');
-    else toast.error(res.message);
+    if (res.success) toast.info(t(res.messageKey));
+    else toast.error(t(res.messageKey));
   };
 
   return (
@@ -58,24 +61,24 @@ const Header = () => {
           <ul className="site-nav">
             {NAV.map((item) =>
               item.items ? (
-                <li key={item.label} className="site-nav__item site-nav__item--folder">
+                <li key={item.key} className="site-nav__item site-nav__item--folder">
                   <button type="button" className="site-nav__link" aria-haspopup="true" aria-expanded="false">
-                    {item.label} <FiChevronDown size={14} aria-hidden="true" />
+                    {t(item.key)} <FiChevronDown size={14} aria-hidden="true" />
                   </button>
                   <ul className="site-nav__dropdown">
                     {item.items.map((sub) => (
                       <li key={sub.href}>
                         <a href={sub.href} target="_blank" rel="noreferrer">
-                          {sub.label}
+                          {t(sub.key)}
                         </a>
                       </li>
                     ))}
                   </ul>
                 </li>
               ) : (
-                <li key={item.label} className="site-nav__item">
+                <li key={item.key} className="site-nav__item">
                   <a className="site-nav__link" href={item.href} target="_blank" rel="noreferrer">
-                    {item.label}
+                    {t(item.key)}
                   </a>
                 </li>
               )
@@ -85,26 +88,27 @@ const Header = () => {
                 <li className="site-nav__item site-nav__item--portal" aria-hidden="true" />
                 <li className="site-nav__item">
                   <NavLink to="/" end className="site-nav__link">
-                    My Form
+                    {t('nav.myForm')}
                   </NavLink>
                 </li>
                 {isAdmin(user.email) && (
                   <li className="site-nav__item">
                     <NavLink to="/admin" className="site-nav__link">
-                      Submissions
+                      {t('nav.submissions')}
                     </NavLink>
                   </li>
                 )}
               </>
             )}
           </ul>
+          <LanguageSwitcher />
           {user ? (
-            <button type="button" className="site-header__cta" onClick={handleLogout} title={`Signed in as ${user.email}`}>
-              Log Out
+            <button type="button" className="site-header__cta" onClick={handleLogout} title={t('nav.signedInAs', { email: user.email })}>
+              {t('nav.logOut')}
             </button>
           ) : (
             <span className="site-header__cta" aria-current="page">
-              Delegate Login
+              {t('nav.delegateLogin')}
             </span>
           )}
         </nav>

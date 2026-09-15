@@ -1,92 +1,69 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useFormikContext } from 'formik';
 import { TextField, SelectField } from '../ui/Field';
-import { COUNTRIES } from '../../data/countries';
-import { LANGUAGES, GENDERS } from '../../data/languages';
+import ComboField from '../ui/ComboField';
+import { countryOptions } from '../../data/countries';
+import { languageOptions, GENDERS } from '../../data/languages';
+import { useI18n } from '../../i18n';
 
 const PersonalInfoStep = () => {
-  const { values, setFieldValue, setFieldTouched } = useFormikContext();
-
-  const toggleLanguage = (lang) => {
-    const set = new Set(values.otherLanguages || []);
-    if (set.has(lang)) set.delete(lang);
-    else set.add(lang);
-    setFieldValue('otherLanguages', Array.from(set));
-    setFieldTouched('otherLanguages', true, false);
-  };
-
-  const otherLangOptions = LANGUAGES.filter((l) => l !== values.preferredLanguage);
+  const { values } = useFormikContext();
+  const { t, locale } = useI18n();
+  const countries = useMemo(() => countryOptions(locale), [locale]);
+  const languages = useMemo(() => languageOptions(locale), [locale]);
+  const otherLanguageOptions = useMemo(() => languages.filter((l) => l.value !== values.preferredLanguage), [languages, values.preferredLanguage]);
 
   return (
     <div className="step">
       <div className="step__header">
-        <h2>Personal details</h2>
-        <p>Use the name as it appears on your passport or government ID.</p>
+        <h2>{t('personal.title')}</h2>
+        <p>{t('personal.sub')}</p>
       </div>
 
       <fieldset className="fieldset">
-        <legend>Name</legend>
+        <legend>{t('personal.legendName')}</legend>
         <div className="grid">
-          <TextField name="firstName" label="First name" autoComplete="given-name" placeholder="e.g. Priya" autoFocus />
-          <TextField name="lastName" label="Last name" autoComplete="family-name" placeholder="e.g. Sharma" />
-          <TextField name="preferredName" label="Preferred name" optional hint="What should we call you at the conference?" autoComplete="nickname" />
-          <TextField name="email" label="Email address" type="email" autoComplete="email" hint="Pre-filled from your account. You can change it." />
+          <TextField name="firstName" label={t('personal.firstName')} autoComplete="given-name" placeholder={t('personal.firstNamePh')} autoFocus />
+          <TextField name="lastName" label={t('personal.lastName')} autoComplete="family-name" placeholder={t('personal.lastNamePh')} />
+          <TextField name="preferredName" label={t('personal.preferredName')} optional hint={t('personal.preferredNameHint')} autoComplete="nickname" />
+          <TextField name="email" label={t('personal.email')} type="email" autoComplete="email" hint={t('personal.emailHint')} />
         </div>
       </fieldset>
 
       <fieldset className="fieldset">
-        <legend>About you</legend>
+        <legend>{t('personal.legendAbout')}</legend>
         <div className="grid">
-          <TextField name="dateOfBirth" label="Date of birth" type="date" autoComplete="bday" max={new Date().toISOString().slice(0, 10)} />
-          <SelectField name="gender" label="Gender">
+          <TextField name="dateOfBirth" label={t('personal.dob')} type="date" autoComplete="bday" max={new Date().toISOString().slice(0, 10)} />
+          <SelectField name="gender" label={t('personal.gender')}>
             {GENDERS.map((g) => (
-              <option key={g.value} value={g.value}>{g.label}</option>
+              <option key={g.value} value={g.value}>{t(g.key)}</option>
             ))}
           </SelectField>
           {values.gender === 'self-describe' && (
             <div className="span-2">
-              <TextField name="genderSelfDescribe" label="How do you describe your gender?" />
+              <TextField name="genderSelfDescribe" label={t('personal.genderSelfDescribe')} />
             </div>
           )}
-          <SelectField name="nationality" label="Nationality" autoComplete="country-name">
-            {COUNTRIES.map((c) => (
-              <option key={c.code} value={c.code}>{c.name}</option>
-            ))}
-          </SelectField>
-          <SelectField name="secondNationality" label="Second nationality" optional placeholder="None">
-            {COUNTRIES.map((c) => (
-              <option key={c.code} value={c.code}>{c.name}</option>
-            ))}
-          </SelectField>
+          <ComboField name="nationality" label={t('personal.nationality')} options={countries} placeholder={t('personal.nationalityPh')} />
+          <ComboField name="secondNationality" label={t('personal.secondNationality')} options={countries} optional placeholder={t('common.none')} />
         </div>
       </fieldset>
 
       <fieldset className="fieldset">
-        <legend>Languages</legend>
+        <legend>{t('personal.legendLanguages')}</legend>
         <div className="grid">
-          <SelectField name="preferredLanguage" label="Preferred language" hint="We will use this for conference materials where possible.">
-            {LANGUAGES.map((l) => (
-              <option key={l} value={l}>{l}</option>
-            ))}
-          </SelectField>
+          <ComboField name="preferredLanguage" label={t('personal.preferredLanguage')} options={languages} placeholder={t('personal.languagePh')} hint={t('personal.preferredLanguageHint')} />
         </div>
-        <div className="field">
-          <div className="field__label">
-            <span>Other languages you speak</span>
-            <span className="field__optional">Optional · up to 6</span>
-          </div>
-          <div className="choice-group" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))' }} role="group" aria-label="Other languages">
-            {otherLangOptions.slice(0, 18).map((lang) => {
-              const checked = (values.otherLanguages || []).includes(lang);
-              return (
-                <label key={lang} className="choice" data-checked={checked} style={{ padding: '10px 12px' }}>
-                  <input type="checkbox" checked={checked} onChange={() => toggleLanguage(lang)} disabled={!checked && (values.otherLanguages || []).length >= 6} />
-                  <span className="choice__text"><strong style={{ fontSize: '0.875rem' }}>{lang}</strong></span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
+        <ComboField
+          name="otherLanguages"
+          label={t('personal.otherLanguages')}
+          options={otherLanguageOptions}
+          optional
+          multi
+          max={6}
+          placeholder={t('personal.languagePh')}
+          hint={t('personal.otherLanguagesHint')}
+        />
       </fieldset>
     </div>
   );

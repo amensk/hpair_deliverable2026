@@ -5,24 +5,28 @@ import { CheckboxField } from '../ui/Field';
 import Alert from '../ui/Alert';
 import { buildSummarySections } from '../../utils/format';
 import { summaryAsText, downloadBlob, safeFilename, printSummary } from '../../utils/summary';
+import { useI18n } from '../../i18n';
 
 const ICONS = { personal: FiUser, contact: FiMapPin, professional: FiBriefcase };
+const MARK = '%%EDIT%%';
 
 const ReviewStep = ({ goToStep, stepErrors }) => {
   const { values } = useFormikContext();
-  const sections = buildSummarySections(values);
+  const { t, locale } = useI18n();
+  const sections = buildSummarySections(values, t, locale);
   const incomplete = stepErrors.some(Boolean);
+  const [incA, incB] = t('review.incomplete', { edit: MARK }).split(MARK);
 
   return (
     <div className="step">
       <div className="step__header">
-        <h2>Review &amp; submit</h2>
-        <p>Check everything carefully. You can jump back to any section to make changes.</p>
+        <h2>{t('review.title')}</h2>
+        <p>{t('review.sub')}</p>
       </div>
 
       {incomplete && (
         <Alert type="warning">
-          Some sections still have missing or invalid answers. Use the <strong>Edit</strong> links below to fix them before submitting.
+          {incA}<strong>{t('common.edit')}</strong>{incB}
         </Alert>
       )}
 
@@ -35,17 +39,17 @@ const ReviewStep = ({ goToStep, stepErrors }) => {
               <div className="summary__head">
                 <h3 id={`sum-${s.key}`}>
                   <Icon size={16} aria-hidden="true" /> {s.title}
-                  {hasErrors && <span className="tag" style={{ background: 'var(--hp-error-bg)', color: 'var(--hp-error)' }}>Needs attention</span>}
+                  {hasErrors && <span className="tag" style={{ background: 'var(--hp-error-bg)', color: 'var(--hp-error)' }}>{t('review.needsAttention')}</span>}
                 </h3>
                 <button type="button" className="summary__edit" onClick={() => goToStep(s.step)}>
-                  Edit
+                  {t('common.edit')}
                 </button>
               </div>
               <dl>
                 {s.rows.length === 0 && (
                   <>
                     <dt>—</dt>
-                    <dd>Nothing entered yet</dd>
+                    <dd>{t('review.nothing')}</dd>
                   </>
                 )}
                 {s.rows.map(([k, v]) => (
@@ -61,23 +65,19 @@ const ReviewStep = ({ goToStep, stepErrors }) => {
       </div>
 
       <div className="no-print" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 20 }}>
-        <button type="button" className="btn btn--ghost btn--sm" style={{ width: 'auto' }} onClick={() => downloadBlob(summaryAsText(values), safeFilename(values, 'txt'), 'text/plain')}>
-          <FiDownload size={16} aria-hidden="true" /> <span>Download draft (.txt)</span>
+        <button type="button" className="btn btn--ghost btn--sm" style={{ width: 'auto' }} onClick={() => downloadBlob(summaryAsText(values, {}, t, locale), safeFilename(values, 'txt'), 'text/plain')}>
+          <FiDownload size={16} aria-hidden="true" /> <span>{t('review.downloadDraft')}</span>
         </button>
-        <button type="button" className="btn btn--ghost btn--sm" style={{ width: 'auto' }} onClick={() => printSummary(values)}>
-          <FiPrinter size={16} aria-hidden="true" /> <span>Print / save as PDF</span>
+        <button type="button" className="btn btn--ghost btn--sm" style={{ width: 'auto' }} onClick={() => printSummary(values, {}, t, locale)}>
+          <FiPrinter size={16} aria-hidden="true" /> <span>{t('review.print')}</span>
         </button>
       </div>
 
       <fieldset className="fieldset" style={{ marginTop: 28 }}>
-        <legend>Declarations</legend>
-        <CheckboxField name="consent" label="I confirm the information above is accurate and complete." description="Providing false information may result in your application being withdrawn." />
-        <CheckboxField
-          name="privacy"
-          label="I agree to HPAIR processing my personal data for conference administration."
-          description="Your data is stored securely and used only for HPAIR programmes. It is never sold."
-        />
-        <CheckboxField name="emailCopy" label="Email me a copy of my submission" description={`We will open a pre-filled email to ${values.email || 'your address'} after you submit.`} />
+        <legend>{t('review.legendDeclarations')}</legend>
+        <CheckboxField name="consent" label={t('review.consent')} description={t('review.consentDesc')} />
+        <CheckboxField name="privacy" label={t('review.privacy')} description={t('review.privacyDesc')} />
+        <CheckboxField name="emailCopy" label={t('review.emailCopy')} description={t('review.emailCopyDesc', { email: values.email || t('review.yourAddress') })} />
       </fieldset>
     </div>
   );
