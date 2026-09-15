@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
-import { FiEye, FiEyeOff, FiArrowRight, FiArrowLeft, FiMail } from 'react-icons/fi';
-import { signInUser, registerUser, resetPassword } from '../services/authService';
+import { FiEye, FiEyeOff, FiArrowRight, FiArrowLeft, FiMail, FiUserCheck } from 'react-icons/fi';
+import { signInUser, registerUser, resetPassword, signInAsGuest } from '../services/authService';
 import { TextField } from './ui/Field';
 import Button from './ui/Button';
 import Alert from './ui/Alert';
@@ -30,6 +30,15 @@ const Login = () => {
   const [showPw, setShowPw] = useState(false);
   const [message, setMessage] = useState(null); // { type, key }
   const [lastEmail, setLastEmail] = useState('');
+  const [guestBusy, setGuestBusy] = useState(false);
+
+  const handleGuest = async () => {
+    setMessage(null);
+    setGuestBusy(true);
+    const result = await signInAsGuest();
+    setGuestBusy(false);
+    if (!result.success) setMessage({ type: 'error', key: result.messageKey });
+  };
 
   const schema = useMemo(() => schemaFor(mode, t), [mode, t]);
 
@@ -126,12 +135,19 @@ const Login = () => {
           </Formik>
 
           {mode !== 'reset' && (
-            <p className="auth__toggle">
-              {mode === 'login' ? t('auth.noAccount') : t('auth.haveAccount')}
-              <button type="button" onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}>
-                {mode === 'login' ? t('auth.createOne') : t('auth.signInInstead')}
-              </button>
-            </p>
+            <>
+              <p className="auth__toggle">
+                {mode === 'login' ? t('auth.noAccount') : t('auth.haveAccount')}
+                <button type="button" onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}>
+                  {mode === 'login' ? t('auth.createOne') : t('auth.signInInstead')}
+                </button>
+              </p>
+              <div className="auth__divider" role="separator"><span>{t('auth.or')}</span></div>
+              <Button type="button" variant="secondary" className="btn--block" icon={FiUserCheck} loading={guestBusy} onClick={handleGuest}>
+                {t('auth.guest')}
+              </Button>
+              <p className="auth__guest-hint">{t('auth.guestHint')}</p>
+            </>
           )}
         </div>
       </section>

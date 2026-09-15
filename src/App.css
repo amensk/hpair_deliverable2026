@@ -1207,6 +1207,20 @@ textarea.input {
   text-underline-offset: 3px;
 }
 
+/* guest sign-in */
+.auth__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 14px;
+  color: var(--hp-ink-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.auth__divider::before, .auth__divider::after { content: ""; flex: 1; height: 1px; background: var(--hp-line); }
+.auth__guest-hint { font-size: 0.8rem; color: var(--hp-ink-muted); text-align: center; margin-top: 10px; }
+
 /* ---------- Skeleton ---------- */
 .skeleton {
   background: linear-gradient(90deg, var(--hp-surface-alt) 25%, #ebe8e4 37%, var(--hp-surface-alt) 63%);

@@ -91,7 +91,7 @@ const Header = () => {
                     {t('nav.myForm')}
                   </NavLink>
                 </li>
-                {isAdmin(user.email) && (
+                {isAdmin(user) && (
                   <li className="site-nav__item">
                     <NavLink to="/admin" className="site-nav__link">
                       {t('nav.submissions')}
@@ -103,7 +103,7 @@ const Header = () => {
           </ul>
           <LanguageSwitcher />
           {user ? (
-            <button type="button" className="site-header__cta" onClick={handleLogout} title={t('nav.signedInAs', { email: user.email })}>
+            <button type="button" className="site-header__cta" onClick={handleLogout} title={user.isAnonymous ? t('nav.guestSession') : t('nav.signedInAs', { email: user.email })}>
               {t('nav.logOut')}
             </button>
           ) : (

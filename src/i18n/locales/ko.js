@@ -115,5 +115,12 @@ const ko = {
   'err.storage.quota': '저장 용량을 초과했습니다.', 'err.storage.retry': '파일 저장소에 연결할 수 없습니다.', 'err.storage.unknown': '파일 저장소를 사용할 수 없습니다.', 'err.storage.noResponse': '파일 저장소가 응답하지 않습니다.',
   'err.storage.module': '파일 저장소 모듈을 불러올 수 없습니다.', 'err.storage.generic': '이력서를 업로드할 수 없습니다.', 'err.cv.noFile': '파일이 선택되지 않았습니다', 'err.cv.tooBigInline': '600 KB를 초과하는 파일은 포함할 수 없어 파일 이름만 기록되었습니다.',
   'boundary.eyebrow': '문제가 발생했습니다', 'boundary.title': '이 페이지에서 예기치 않은 오류가 발생했습니다.', 'boundary.body': '초안은 이 기기에 저장되어 있습니다. 새로 고침하면 중단한 곳에서 계속할 수 있습니다. 계속 발생하면 {email}로 이메일을 보내주세요.', 'boundary.details': '기술 세부 정보',
+  "auth.or": "또는",
+  "auth.guest": "게스트로 계속",
+  "auth.guestHint": "계정이 필요 없습니다. 제출 전까지 양식은 이 기기에 저장됩니다.",
+  "auth.guestWelcome": "게스트로 이용 중입니다.",
+  "auth.err.guestDisabled": "이 프로젝트에서 게스트 접근이 활성화되지 않았습니다. 계정을 만들어 주세요.",
+  "nav.guestSession": "게스트 세션",
+  "admin.restrictedGuest": "게스트 세션에서는 제출 내역을 볼 수 없습니다. 계정으로 로그인하세요.",
 };
 export default ko;

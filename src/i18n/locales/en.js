@@ -453,6 +453,12 @@ const en = {
   'boundary.title': 'This page hit an unexpected error.',
   'boundary.body': 'Your draft is saved on this device. Reload to continue where you left off. If it keeps happening, email {email}.',
   'boundary.details': 'Technical details',
+  "auth.or": "or",
+  "auth.guest": "Continue as guest",
+  "auth.guestHint": "No account needed. Your form is saved on this device until you submit.",
+  "auth.guestWelcome": "You are browsing as a guest.",
+  "auth.err.guestDisabled": "Guest access is not enabled for this project. Please create an account instead.",
+  "nav.guestSession": "Guest session",
+  "admin.restrictedGuest": "Guest sessions cannot view submissions. Sign in with an account.",
 };
-
 export default en;

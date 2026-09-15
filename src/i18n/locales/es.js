@@ -115,5 +115,12 @@ const es = {
   'err.storage.quota': 'Cuota de almacenamiento superada.', 'err.storage.retry': 'No se pudo contactar con el servicio de almacenamiento.', 'err.storage.unknown': 'El servicio de almacenamiento no está disponible.', 'err.storage.noResponse': 'El servicio de almacenamiento no respondió.',
   'err.storage.module': 'No se pudo cargar el módulo de almacenamiento.', 'err.storage.generic': 'No se pudo subir el CV.', 'err.cv.noFile': 'Ningún archivo seleccionado', 'err.cv.tooBigInline': 'Los archivos de más de 600 KB no pueden incorporarse, así que solo se registró el nombre.',
   'boundary.eyebrow': 'Algo salió mal', 'boundary.title': 'Esta página encontró un error inesperado.', 'boundary.body': 'Tu borrador está guardado en este dispositivo. Recarga para continuar donde lo dejaste. Si persiste, escribe a {email}.', 'boundary.details': 'Detalles técnicos',
+  "auth.or": "o",
+  "auth.guest": "Continuar como invitado",
+  "auth.guestHint": "No necesitas cuenta. Tu formulario se guarda en este dispositivo hasta que envíes.",
+  "auth.guestWelcome": "Estás navegando como invitado.",
+  "auth.err.guestDisabled": "El acceso como invitado no está habilitado en este proyecto. Crea una cuenta.",
+  "nav.guestSession": "Sesión de invitado",
+  "admin.restrictedGuest": "Las sesiones de invitado no pueden ver los envíos. Inicia sesión con una cuenta.",
 };
 export default es;

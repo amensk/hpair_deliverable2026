@@ -115,5 +115,12 @@ const zh = {
   'err.storage.quota': '存储配额已用尽。', 'err.storage.retry': '无法连接文件存储服务。', 'err.storage.unknown': '文件存储服务不可用。', 'err.storage.noResponse': '文件存储服务没有响应。',
   'err.storage.module': '无法加载文件存储模块。', 'err.storage.generic': '简历无法上传。', 'err.cv.noFile': '未选择文件', 'err.cv.tooBigInline': '超过 600 KB 的文件无法嵌入，因此仅记录了文件名。',
   'boundary.eyebrow': '出错了', 'boundary.title': '此页面遇到了意外错误。', 'boundary.body': '您的草稿已保存在此设备上。重新加载即可从中断处继续。如果问题持续，请发邮件至 {email}。', 'boundary.details': '技术详情',
+  "auth.or": "或",
+  "auth.guest": "以访客身份继续",
+  "auth.guestHint": "无需账户。提交前，您的表单会保存在此设备上。",
+  "auth.guestWelcome": "您正在以访客身份浏览。",
+  "auth.err.guestDisabled": "此项目未启用访客访问，请创建账户。",
+  "nav.guestSession": "访客会话",
+  "admin.restrictedGuest": "访客会话无法查看提交记录，请使用账户登录。",
 };
 export default zh;

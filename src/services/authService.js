@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   sendPasswordResetEmail,
+  signInAnonymously,
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
@@ -44,6 +45,19 @@ export const signInUser = async (email, password) => {
       messageKey: getErrorKey(error.code),
       message: getErrorMessage(error.code) 
     };
+  }
+};
+
+// Sign in as a guest (Firebase anonymous auth). No email or password needed;
+// the session lives in this browser until the user logs out.
+export const signInAsGuest = async () => {
+  try {
+    const userCredential = await signInAnonymously(auth);
+    return { success: true, user: userCredential.user, messageKey: 'auth.guestWelcome', message: tEn('auth.guestWelcome') };
+  } catch (error) {
+    console.error('Guest sign-in error:', error);
+    const key = error.code === 'auth/operation-not-allowed' || error.code === 'auth/admin-restricted-operation' ? 'auth.err.guestDisabled' : getErrorKey(error.code);
+    return { success: false, messageKey: key, message: tEn(key) };
   }
 };
 
@@ -104,6 +118,7 @@ const authService = {
   registerUser,
   signInUser,
   resetPassword,
+  signInAsGuest,
   signOutUser,
   onAuthStateChange,
   getCurrentUser

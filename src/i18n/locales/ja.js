@@ -115,5 +115,12 @@ const ja = {
   'err.storage.quota': 'ストレージの容量を超えました。', 'err.storage.retry': 'ファイルストレージに接続できませんでした。', 'err.storage.unknown': 'ファイルストレージを利用できません。', 'err.storage.noResponse': 'ファイルストレージから応答がありません。',
   'err.storage.module': 'ファイルストレージモジュールを読み込めませんでした。', 'err.storage.generic': '履歴書をアップロードできませんでした。', 'err.cv.noFile': 'ファイルが選択されていません', 'err.cv.tooBigInline': '600 KB を超えるファイルは埋め込めないため、ファイル名のみ記録しました。',
   'boundary.eyebrow': '問題が発生しました', 'boundary.title': 'このページで予期しないエラーが発生しました。', 'boundary.body': '下書きはこの端末に保存されています。再読み込みすると中断したところから続けられます。繰り返し発生する場合は {email} までメールしてください。', 'boundary.details': '技術的な詳細',
+  "auth.or": "または",
+  "auth.guest": "ゲストとして続行",
+  "auth.guestHint": "アカウント不要。送信するまでフォームはこの端末に保存されます。",
+  "auth.guestWelcome": "ゲストとして閲覧しています。",
+  "auth.err.guestDisabled": "このプロジェクトではゲストアクセスが有効になっていません。アカウントを作成してください。",
+  "nav.guestSession": "ゲストセッション",
+  "admin.restrictedGuest": "ゲストセッションでは提出を閲覧できません。アカウントでログインしてください。",
 };
 export default ja;

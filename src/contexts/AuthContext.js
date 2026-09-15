@@ -28,6 +28,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     isAuthenticated: !!user,
+    isGuest: Boolean(user?.isAnonymous),
     userId: user?.uid || null
   };
 

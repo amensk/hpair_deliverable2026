@@ -20,13 +20,13 @@ const csvEscape = (v) => {
 const AdminPanel = () => {
   const { user } = useAuth();
   const { t } = useI18n();
-  if (!isAdmin(user?.email)) {
+  if (!isAdmin(user)) {
     return (
       <div className="container">
         <div className="card card--pad" role="alert">
           <span className="eyebrow">{t('admin.restricted')}</span>
           <h2>{t('admin.restrictedTitle')}</h2>
-          <p style={{ marginTop: 8 }}>{t('admin.restrictedBody', { email: user?.email })}</p>
+          <p style={{ marginTop: 8 }}>{user?.isAnonymous ? t('admin.restrictedGuest') : t('admin.restrictedBody', { email: user?.email })}</p>
           <Link to="/" className="btn btn--primary" style={{ width: 'auto', marginTop: 20 }}>{t('admin.backToForm')}</Link>
         </div>
       </div>
@@ -113,7 +113,7 @@ const AdminTable = ({ user }) => {
     <div className="container">
       <div className="card card--pad">
         <div className="toolbar" style={{ justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--hp-ink-muted)' }}>{t('nav.signedInAs', { email: user.email })}</span>
+          <span style={{ fontSize: '0.85rem', color: 'var(--hp-ink-muted)' }}>{user.isAnonymous ? t('nav.guestSession') : t('nav.signedInAs', { email: user.email })}</span>
           <Link to="/" className="btn btn--ghost btn--sm" style={{ width: 'auto' }}>
             <FiArrowLeft size={16} aria-hidden="true" /> <span>{t('admin.backToForm')}</span>
           </Link>

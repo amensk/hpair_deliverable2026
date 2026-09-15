@@ -115,5 +115,12 @@ const vi = {
   'err.storage.quota': 'Vượt hạn mức lưu trữ.', 'err.storage.retry': 'Không thể kết nối dịch vụ lưu trữ tệp.', 'err.storage.unknown': 'Dịch vụ lưu trữ tệp không khả dụng.', 'err.storage.noResponse': 'Dịch vụ lưu trữ tệp không phản hồi.',
   'err.storage.module': 'Không thể tải mô-đun lưu trữ tệp.', 'err.storage.generic': 'Không thể tải CV lên.', 'err.cv.noFile': 'Chưa chọn tệp', 'err.cv.tooBigInline': 'Tệp trên 600 KB không thể nhúng, nên chỉ ghi lại tên tệp.',
   'boundary.eyebrow': 'Đã có lỗi', 'boundary.title': 'Trang này gặp lỗi không mong muốn.', 'boundary.body': 'Bản nháp của bạn đã được lưu trên thiết bị này. Tải lại để tiếp tục từ chỗ dừng. Nếu vẫn tiếp diễn, gửi email tới {email}.', 'boundary.details': 'Chi tiết kỹ thuật',
+  "auth.or": "hoặc",
+  "auth.guest": "Tiếp tục với tư cách khách",
+  "auth.guestHint": "Không cần tài khoản. Biểu mẫu được lưu trên thiết bị này cho đến khi bạn gửi.",
+  "auth.guestWelcome": "Bạn đang duyệt với tư cách khách.",
+  "auth.err.guestDisabled": "Truy cập khách chưa được bật cho dự án này. Vui lòng tạo tài khoản.",
+  "nav.guestSession": "Phiên khách",
+  "admin.restrictedGuest": "Phiên khách không thể xem bài nộp. Hãy đăng nhập bằng tài khoản.",
 };
 export default vi;

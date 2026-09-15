@@ -7,4 +7,7 @@ const LIST = (process.env.REACT_APP_ADMIN_EMAILS || '')
 
 export const adminListConfigured = LIST.length > 0;
 
-export const isAdmin = (email) => !adminListConfigured || LIST.includes((email || '').toLowerCase());
+export const isAdmin = (user) => {
+  if (!user || user.isAnonymous) return false;
+  return !adminListConfigured || LIST.includes((user.email || '').toLowerCase());
+};
