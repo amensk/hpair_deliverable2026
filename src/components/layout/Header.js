@@ -11,6 +11,8 @@ import LanguageSwitcher from '../ui/LanguageSwitcher';
 // Mirrors the hpair.org primary navigation (same items, same dropdowns),
 // followed by the portal's own links when signed in.
 const HPAIR = 'https://www.hpair.org';
+// Public URL of this portal; the header's "Delegate Login" box links here like hpair.org's does.
+export const PORTAL_URL = process.env.REACT_APP_PORTAL_URL || 'https://hpair-delegate-portal.vercel.app/';
 const NAV = [
   { key: 'nav.home', href: `${HPAIR}/` },
   {
@@ -107,9 +109,9 @@ const Header = () => {
               {t('nav.logOut')}
             </button>
           ) : (
-            <span className="site-header__cta" aria-current="page">
+            <a className="site-header__cta" href={PORTAL_URL}>
               {t('nav.delegateLogin')}
-            </span>
+            </a>
           )}
         </nav>
       </div>
