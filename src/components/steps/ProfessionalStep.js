@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useFormikContext } from 'formik';
 import { useDropzone } from 'react-dropzone';
-import { FiUploadCloud, FiFileText, FiTrash2, FiLinkedin, FiAlertCircle } from 'react-icons/fi';
+import { FiUploadCloud, FiFileText, FiTrash2, FiLinkedin, FiAlertCircle, FiEye } from 'react-icons/fi';
 import { TextField, SelectField, RadioGroup, TextArea } from '../ui/Field';
 import { OCCUPATIONS, TRACKS, DIETARY, HEARD_FROM } from '../../data/languages';
 import { CV_ACCEPT, CV_MAX_BYTES } from '../../validation/schemas';
@@ -52,6 +52,19 @@ const CVUpload = ({ restoredMeta }) => {
             <div className="file-chip__name">{file.name}</div>
             <div className="file-chip__size">{formatBytes(file.size)} · {file.type?.includes('pdf') ? 'PDF' : 'Word document'}</div>
           </div>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            style={{ width: 'auto' }}
+            onClick={() => {
+              const url = URL.createObjectURL(file);
+              window.open(url, '_blank', 'noopener');
+              setTimeout(() => URL.revokeObjectURL(url), 60000);
+            }}
+            aria-label="Preview CV in a new tab"
+          >
+            <FiEye size={16} aria-hidden="true" /> <span>Preview</span>
+          </button>
           <button type="button" className="btn btn--ghost btn--sm" onClick={open} style={{ width: 'auto' }}>Replace</button>
           <button
             type="button"
@@ -100,8 +113,14 @@ const CVUpload = ({ restoredMeta }) => {
   );
 };
 
+const ensureHttps = (v) => {
+  const t = (v || '').trim();
+  if (!t) return t;
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+};
+
 const ProfessionalStep = ({ restoredCvMeta }) => {
-  const { values } = useFormikContext();
+  const { values, setFieldValue } = useFormikContext();
 
   return (
     <div className="step">
@@ -153,13 +172,22 @@ const ProfessionalStep = ({ restoredCvMeta }) => {
               placeholder="https://www.linkedin.com/in/your-name"
               autoComplete="url"
               hint="Copy it from your profile page."
+              onValueBlur={(v) => setFieldValue('linkedinUrl', ensureHttps(v))}
             />
             <div className="field__hint" style={{ marginTop: -14, marginBottom: 20, display: 'flex', gap: 6, alignItems: 'center' }}>
               <FiLinkedin size={14} aria-hidden="true" /> Tip: linkedin.com/in/… is the personal profile format.
             </div>
           </div>
         )}
-        <TextField name="website" label="Personal website or portfolio" optional type="text" inputMode="url" placeholder="yourname.com" />
+        <TextField
+          name="website"
+          label="Personal website or portfolio"
+          optional
+          type="text"
+          inputMode="url"
+          placeholder="yourname.com"
+          onValueBlur={(v) => setFieldValue('website', ensureHttps(v))}
+        />
       </fieldset>
 
       <fieldset className="fieldset">

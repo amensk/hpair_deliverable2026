@@ -57,9 +57,13 @@ const useFieldState = (name) => {
   return { field, meta, showError, isValid };
 };
 
-export const TextField = ({ name, label, optional, hint, type = 'text', className = '', ...rest }) => {
+export const TextField = ({ name, label, optional, hint, type = 'text', className = '', onValueBlur, ...rest }) => {
   const id = useId();
   const { field, meta, showError, isValid } = useFieldState(name);
+  const onBlur = (e) => {
+    if (onValueBlur) onValueBlur(e.target.value, e);
+    field.onBlur(e);
+  };
   return (
     <FieldShell id={id} label={label} optional={optional} hint={hint} error={meta.error} showError={showError}>
       <div className="field__control">
@@ -72,6 +76,7 @@ export const TextField = ({ name, label, optional, hint, type = 'text', classNam
           aria-describedby={showError ? `${id}-error` : hint ? `${id}-hint` : undefined}
           aria-required={!optional || undefined}
           {...field}
+          onBlur={onBlur}
           value={field.value ?? ''}
           {...rest}
         />

@@ -4,6 +4,7 @@ import { FiChevronDown } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { signOutUser } from '../../services/authService';
 import { useToast } from '../ui/Toast';
+import { isAdmin } from '../../utils/admin';
 
 // Mirrors the hpair.org primary navigation (same items, same dropdowns),
 // followed by the portal's own links when signed in.
@@ -87,11 +88,13 @@ const Header = () => {
                     My Form
                   </NavLink>
                 </li>
-                <li className="site-nav__item">
-                  <NavLink to="/admin" className="site-nav__link">
-                    Submissions
-                  </NavLink>
-                </li>
+                {isAdmin(user.email) && (
+                  <li className="site-nav__item">
+                    <NavLink to="/admin" className="site-nav__link">
+                      Submissions
+                    </NavLink>
+                  </li>
+                )}
               </>
             )}
           </ul>

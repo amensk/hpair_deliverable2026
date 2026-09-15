@@ -1,8 +1,10 @@
 // Firestore service for form submissions
 import {
   collection,
-  addDoc,
+  doc,
+  getDoc,
   getDocs,
+  writeBatch,
   query,
   orderBy,
   limit,
@@ -26,17 +28,48 @@ const friendlyError = (code) => {
   }
 };
 
-// Submit form data to Firestore
-export const submitForm = async (formData) => {
+/**
+ * Submit form data to Firestore.
+ * The submission document stays small; an inline CV (base64 data URL) is
+ * written to formSubmissions/{id}/files/cv in the same atomic batch so list
+ * queries never download file payloads.
+ */
+export const submitForm = async (formData, inlineCv = null) => {
   try {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+    const ref = doc(collection(db, COLLECTION_NAME));
+    const batch = writeBatch(db);
+    batch.set(ref, {
       ...formData,
+      cvInline: Boolean(inlineCv),
       submittedAt: serverTimestamp(),
       timestamp: Date.now(),
     });
-    return { success: true, id: docRef.id, message: 'Form submitted successfully!' };
+    if (inlineCv) {
+      batch.set(doc(db, COLLECTION_NAME, ref.id, 'files', 'cv'), {
+        userId: formData.userId,
+        name: formData.cvName || 'cv',
+        type: formData.cvType || 'application/octet-stream',
+        size: formData.cvSize || null,
+        data: inlineCv,
+        createdAt: serverTimestamp(),
+      });
+    }
+    await batch.commit();
+    return { success: true, id: ref.id, message: 'Form submitted successfully!' };
   } catch (error) {
     console.error('Error submitting form:', error);
+    return { success: false, code: error.code, message: friendlyError(error.code) };
+  }
+};
+
+// Fetch an inline CV stored under a submission (on demand, for downloads)
+export const getSubmissionCV = async (submissionId) => {
+  try {
+    const snap = await getDoc(doc(db, COLLECTION_NAME, submissionId, 'files', 'cv'));
+    if (!snap.exists()) return { success: false, message: 'No CV file is stored for this submission.' };
+    return { success: true, data: snap.data() };
+  } catch (error) {
+    console.error('Error fetching CV:', error);
     return { success: false, code: error.code, message: friendlyError(error.code) };
   }
 };
@@ -84,6 +117,6 @@ export const getSubmissionCount = async () => {
   }
 };
 
-const firebaseService = { submitForm, getFormSubmissions, getUserSubmissions, getSubmissionCount };
+const firebaseService = { submitForm, getSubmissionCV, getFormSubmissions, getUserSubmissions, getSubmissionCount };
 
 export default firebaseService;

@@ -2,7 +2,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
 
 // Values can be overridden per deployment with REACT_APP_FIREBASE_* env vars
 // (see .env.example). They default to the HPAIR deliverable project that
@@ -24,7 +23,6 @@ const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const storage = getStorage(app);
 export const projectId = firebaseConfig.projectId;
 
 export default app;

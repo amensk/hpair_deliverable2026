@@ -1,26 +1,37 @@
 // Firebase Storage upload for CV files, with progress reporting.
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase/config';
+import app from '../firebase/config';
+
+// The Storage SDK is only needed at upload time, so it is loaded on demand
+// to keep it out of the initial bundle.
+const loadStorage = async () => {
+  const mod = await import('firebase/storage');
+  const storage = mod.getStorage(app);
+  storage.maxUploadRetryTime = UPLOAD_TIMEOUT_MS;
+  storage.maxOperationRetryTime = UPLOAD_TIMEOUT_MS;
+  return { ...mod, storage };
+};
 
 const sanitize = (name) => name.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 100);
 
 // Give up quickly when the bucket is unreachable so the inline fallback can
 // take over. The SDK default is 10 minutes of retries.
 const UPLOAD_TIMEOUT_MS = 15000;
-storage.maxUploadRetryTime = UPLOAD_TIMEOUT_MS;
-storage.maxOperationRetryTime = UPLOAD_TIMEOUT_MS;
 
 /**
  * Upload a CV under cvs/{userId}/{timestamp}-{filename}.
  * Resolves to { success, url, path, name, size, type } or { success:false, code, message }.
  * onProgress receives 0..100.
  */
-export const uploadCV = (file, userId, onProgress) =>
-  new Promise((resolve) => {
-    if (!file) {
-      resolve({ success: false, code: 'no-file', message: 'No file selected' });
-      return;
-    }
+export const uploadCV = async (file, userId, onProgress) => {
+  if (!file) return { success: false, code: 'no-file', message: 'No file selected' };
+  let sdk;
+  try {
+    sdk = await loadStorage();
+  } catch (error) {
+    return { success: false, code: 'storage/unavailable', message: 'The file storage module could not be loaded.' };
+  }
+  const { ref, uploadBytesResumable, getDownloadURL, storage } = sdk;
+  return new Promise((resolve) => {
     const path = `cvs/${userId || 'anonymous'}/${Date.now()}-${sanitize(file.name)}`;
     const task = uploadBytesResumable(ref(storage, path), file, { contentType: file.type || 'application/octet-stream' });
 
@@ -61,6 +72,7 @@ export const uploadCV = (file, userId, onProgress) =>
       }
     );
   });
+};
 
 const friendlyStorageError = (code) => {
   switch (code) {

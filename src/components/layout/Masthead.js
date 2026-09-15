@@ -18,7 +18,7 @@ const Masthead = () => {
 
   return (
     <div className="masthead" data-compact={key === 'login' ? undefined : 'true'}>
-      <img className="masthead__photo" src={`${process.env.PUBLIC_URL}/hero-delegates.jpg`} alt="" aria-hidden="true" />
+      <img className="masthead__photo" src={`${process.env.PUBLIC_URL}/hero-delegates.jpg`} alt="" aria-hidden="true" width="1920" height="1080" fetchpriority="high" decoding="async" />
       <div className="masthead__overlay" aria-hidden="true" />
       <Header />
       <div className="masthead__content">

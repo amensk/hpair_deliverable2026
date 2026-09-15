@@ -2,6 +2,7 @@
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
+  sendPasswordResetEmail,
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
@@ -40,6 +41,21 @@ export const signInUser = async (email, password) => {
       success: false, 
       message: getErrorMessage(error.code) 
     };
+  }
+};
+
+// Send a password reset email
+export const resetPassword = async (email) => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    return { success: true, message: 'If an account exists for that email, a reset link is on its way.' };
+  } catch (error) {
+    console.error('Reset error:', error);
+    // Do not reveal whether the address exists.
+    if (error.code === 'auth/user-not-found') {
+      return { success: true, message: 'If an account exists for that email, a reset link is on its way.' };
+    }
+    return { success: false, message: getErrorMessage(error.code) };
   }
 };
 
@@ -95,6 +111,7 @@ const getErrorMessage = (errorCode) => {
 const authService = {
   registerUser,
   signInUser,
+  resetPassword,
   signOutUser,
   onAuthStateChange,
   getCurrentUser

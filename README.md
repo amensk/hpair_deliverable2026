@@ -20,6 +20,14 @@ Test account for reviewers: `delegate.test@hpair-demo.com` / `Hpair2026!` (or re
 
 ### Bonus features
 
+- **Completion meter** — live percentage and per-section "N to go" counts computed from Yup validation of the whole form, not just the current step.
+- **Forgot password** — Firebase password-reset email from the sign-in card, with a non-enumerating success message.
+- **Resume banner** — a restored draft shows a "Welcome back" bar with Keep going / Start over; drafts can be cleared at any time.
+- **Duplicate-submission notice** — delegates who already submitted see the date and are told a second submit creates a separate record.
+- **Offline awareness** — a banner appears when the browser goes offline and Submit is held until it reconnects; autosave keeps working.
+- **CV preview** — open the attached file in a new tab before submitting; LinkedIn and website URLs are normalised to `https://` on blur.
+- **Error boundary** — a render error in any section shows a recoverable message instead of a blank page; the draft survives a reload.
+
 - **Auto-save** — drafts persist to `localStorage` per user (debounced), including the current step. Restored on return with a toast. Files can't be serialised, so the user is prompted to re-attach the CV. "Clear draft" available in the side rail.
 - **Keyboard navigation** — `Enter` advances to the next step (except in textareas), focus moves to the step heading on change, stepper items are real buttons, custom checkboxes/radios keep native focus rings.
 - **Conditional questions** — LinkedIn URL only when the user says they have one; self-describe gender; "other" dietary requirement.
@@ -87,6 +95,11 @@ So no fork of the starter can persist data to that project as shipped. This depl
 
 - **Email delivery is client-side (`mailto:`).** Sending real email needs a server or the Firebase "Trigger Email" extension, which requires project-owner access to install and an SMTP credential. The `mailto:` approach works with zero backend and never exposes credentials. Wiring the extension is a one-line change: write the summary to a `mail` collection in `handleSubmit`.
 - **CV upload degrades gracefully** (Storage → inline base64 → name only), see above. Inline storage is capped at 600 KB because Firestore documents max out at 1 MiB.
+- **Inline CVs live in a subcollection** (`formSubmissions/{id}/files/cv`), written in the same atomic batch as the submission. List queries for the delegate and admin views therefore never download file payloads; the file is fetched only when someone clicks Download.
+- **Security rules validate shape, not just auth**: field types and length caps, both declarations must be true, the CV payload may not be placed on the parent document, and the child file's owner must match the parent's (`getAfter` because both land in one batch).
+- **Performance**: the admin route and the Firebase Storage SDK are code-split and loaded on demand; the hero image is preloaded with `fetchpriority="high"`; static assets get immutable cache headers and the site sends `nosniff`, `X-Frame-Options`, HSTS, and a referrer policy via `vercel.json`.
+- **Admin allow-list** — set `REACT_APP_ADMIN_EMAILS` to restrict `/admin` and hide its nav link; left unset for the demo so reviewers can see it.
+- **Tests** — `npm test` runs 20 Jest cases covering every step schema (age gate, conditional LinkedIn, CV size/type, declarations) and the summary/formatting utilities.
 - **Drafts live in `localStorage`, not Firestore.** Cheaper, instant, and avoids writing half-finished PII to the database. The cost is that drafts are per-device.
 - **Per-step Yup schemas** instead of one big schema, so `isValid` means "this step is valid" and the Review step can compute per-section completeness with `isValidSync`.
 - **The user's own submissions are fetched with a `where('userId' == uid)` query and sorted client-side**, which avoids needing a composite Firestore index that I can't create on a project I don't own.

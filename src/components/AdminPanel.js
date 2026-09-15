@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiRefreshCw, FiDownload, FiArrowLeft, FiExternalLink } from 'react-icons/fi';
-import { getFormSubmissions } from '../services/firebaseService';
+import { getFormSubmissions, getSubmissionCV } from '../services/firebaseService';
+import { isAdmin } from '../utils/admin';
 import { useAuth } from '../contexts/AuthContext';
 import Alert from './ui/Alert';
 import { formatDate, fullName, formatPhone } from '../utils/format';
@@ -16,12 +17,38 @@ const csvEscape = (v) => {
 };
 
 const AdminPanel = () => {
+  const { user } = useAuth();
+  if (!isAdmin(user?.email)) {
+    return (
+      <div className="container">
+        <div className="card card--pad" role="alert">
+          <span className="eyebrow">Restricted</span>
+          <h2>This page is limited to HPAIR staff.</h2>
+          <p style={{ marginTop: 8 }}>Your account ({user?.email}) is not on the admin list.</p>
+          <Link to="/" className="btn btn--primary" style={{ width: 'auto', marginTop: 20 }}>Back to my form</Link>
+        </div>
+      </div>
+    );
+  }
+  return <AdminTable user={user} />;
+};
+
+const AdminTable = ({ user }) => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('');
   const [track, setTrack] = useState('');
-  const { user } = useAuth();
+  const [fetchingCv, setFetchingCv] = useState(null);
+
+  const downloadCv = async (s) => {
+    if (s.cvData) return downloadDataUrl(s.cvData, s.cvName);
+    setFetchingCv(s.id);
+    const res = await getSubmissionCV(s.id);
+    setFetchingCv(null);
+    if (res.success) downloadDataUrl(res.data.data, res.data.name || s.cvName);
+    else window.alert(res.message);
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,7 +90,7 @@ const AdminPanel = () => {
           TRACKS.find((t) => t.value === s.track)?.label || s.track,
           s.preferredLanguage,
           s.linkedinUrl,
-          s.cvUrl || (s.cvData ? `${s.cvName} (embedded)` : s.cvName),
+          s.cvUrl || (s.cvData || s.cvInline ? `${s.cvName} (embedded)` : s.cvName),
         ]
           .map(csvEscape)
           .join(',')
@@ -160,8 +187,10 @@ const AdminPanel = () => {
                       )}
                       {s.cvUrl ? (
                         <a href={s.cvUrl} target="_blank" rel="noreferrer">CV <FiExternalLink size={12} aria-hidden="true" /></a>
-                      ) : s.cvData ? (
-                        <button type="button" className="summary__edit" onClick={() => downloadDataUrl(s.cvData, s.cvName)}>CV (download)</button>
+                      ) : s.cvData || s.cvInline ? (
+                        <button type="button" className="summary__edit" onClick={() => downloadCv(s)} disabled={fetchingCv === s.id}>
+                          {fetchingCv === s.id ? 'Fetching…' : 'CV (download)'}
+                        </button>
                       ) : s.cvName ? (
                         <span title="File name recorded; upload was not stored">CV: {s.cvName}</span>
                       ) : null}

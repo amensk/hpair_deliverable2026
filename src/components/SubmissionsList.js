@@ -1,9 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FiRefreshCw, FiDownload, FiExternalLink } from 'react-icons/fi';
 import Alert from './ui/Alert';
 import { buildSummarySections, formatDate, fullName } from '../utils/format';
 import { summaryAsText, downloadBlob, safeFilename } from '../utils/summary';
 import { downloadDataUrl } from '../utils/file';
+import { getSubmissionCV } from '../services/firebaseService';
+
+const CVDownload = ({ submission, className = 'btn btn--ghost btn--sm' }) => {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const download = async () => {
+    if (submission.cvData) return downloadDataUrl(submission.cvData, submission.cvName);
+    setBusy(true);
+    setErr('');
+    const res = await getSubmissionCV(submission.id);
+    setBusy(false);
+    if (res.success) downloadDataUrl(res.data.data, res.data.name || submission.cvName);
+    else setErr(res.message);
+  };
+  return (
+    <>
+      <button type="button" className={className} style={{ width: 'auto' }} onClick={download} disabled={busy}>
+        {busy ? <span className="spinner" aria-hidden="true" /> : <FiDownload size={16} aria-hidden="true" />} <span>{busy ? 'Fetching…' : 'Download CV'}</span>
+      </button>
+      {err && <span className="field__error" role="alert">{err}</span>}
+    </>
+  );
+};
 
 const SubmissionsList = ({ submissions, loading, error, onRefresh }) => (
   <section className="submissions" aria-labelledby="subs-title">
@@ -79,11 +102,7 @@ const SubmissionsList = ({ submissions, loading, error, onRefresh }) => (
                   <FiExternalLink size={16} aria-hidden="true" /> <span>Open CV</span>
                 </a>
               )}
-              {!s.cvUrl && s.cvData && (
-                <button type="button" className="btn btn--ghost btn--sm" style={{ width: 'auto' }} onClick={() => downloadDataUrl(s.cvData, s.cvName)}>
-                  <FiDownload size={16} aria-hidden="true" /> <span>Download CV</span>
-                </button>
-              )}
+              {!s.cvUrl && (s.cvData || s.cvInline) && <CVDownload submission={s} />}
             </div>
           </div>
         </details>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './components/ui/Toast';
@@ -6,7 +6,10 @@ import Masthead from './components/layout/Masthead';
 import Footer from './components/layout/Footer';
 import Login from './components/Login';
 import MultiStepForm from './components/MultiStepForm';
-import AdminPanel from './components/AdminPanel';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// The admin table (and its CSV export) is only needed by staff; load it on demand.
+const AdminPanel = lazy(() => import('./components/AdminPanel'));
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -33,8 +36,11 @@ function App() {
       <ToastProvider>
         <Router>
           <div className="app">
+            <a className="skip-link" href="#main">Skip to main content</a>
             <Masthead />
-            <main className="main" id="main">
+            <main className="main" id="main" tabIndex={-1}>
+              <ErrorBoundary>
+              <Suspense fallback={<div className="container loading-screen" role="status"><span className="spinner" aria-hidden="true" /></div>}>
               <Routes>
                 <Route
                   path="/"
@@ -54,6 +60,8 @@ function App() {
                 />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+              </Suspense>
+              </ErrorBoundary>
             </main>
             <Footer />
           </div>
