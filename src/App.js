@@ -7,10 +7,10 @@ import Footer from './components/layout/Footer';
 import Login from './components/Login';
 import MultiStepForm from './components/MultiStepForm';
 import ErrorBoundary from './components/ErrorBoundary';
+import './App.css';
 
 // The admin table (and its CSV export) is only needed by staff; load it on demand.
 const AdminPanel = lazy(() => import('./components/AdminPanel'));
-import './App.css';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
